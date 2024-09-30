@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 API_KEY = '7368730334:AAH9xUG8G_Ro8mvV_fDQxd5ddkwjxHnBoeg'
 ADMIN_CHAT_ID = '1653222949'
-GEMINI_API_KEY = 'AIzaSyDlIJZ3gAae5S_owNcETNahJvLYwPpFEwA'
+GEMINI_API_KEY = 'AIzaSyCzgAreGdXqUXZd5-P_iLUg-3hM9U4Md70'
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 CHANNEL_ID = '@fronest_news'
 
