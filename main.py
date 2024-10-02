@@ -1131,14 +1131,14 @@ def shutdown():
 @bot.message_handler(commands=['apks'])
 def handle_apks(message):
     apks_info = """
-Привет! Ты попал в мир анализа APK-файлов.
+Привет! Ты попал в мир APK-файлов.
 
 Здесь ты найдешь различные инструменты для декомпиляции, анализа, проверки и исследования приложений на Android. Выбери нужную опцию:
 """
     keyboard = InlineKeyboardMarkup()
     buttons = [
-        InlineKeyboardButton(text="Декомпиляция APK", callback_data="decompile_apk"),
-        InlineKeyboardButton(text="Анализ разрешений", callback_data="analyze_permissions"),
+        InlineKeyboardButton(text="Apk Mods Store", callback_data="decompile_apk"),
+        InlineKeyboardButton(text="Fake GPS Location", callback_data="analyze_permissions"),
         InlineKeyboardButton(text="Статический анализ", callback_data="static_analysis"),
         InlineKeyboardButton(text="Динамический анализ", callback_data="dynamic_analysis"),
         InlineKeyboardButton(text="Подпись APK", callback_data="sign_apk"),
@@ -1164,14 +1164,16 @@ def handle_apks_topics(call):
     topics = {
         'decompile_apk': {
             'text': """
-Декомпиляция APK позволяет извлечь исходный код приложения. Используй инструменты, такие как APKTool или JADX для обратной разработки.
+Lite APKS.com - приложение/сайт, самый лучший для скачивания крякнутых приложений.
+https://upload.app/download/liteapks/com.liteapks.androidapps/67215d3af5ad10d84e1ba0e394ea3d5e7e93ead81bdfd05cd572247aed28d5b7
 """,
             'prev': None,  # Первая тема, нет кнопки "Назад"
             'next': 'analyze_permissions'
         },
         'analyze_permissions': {
             'text': """
-Анализ разрешений позволяет определить, какие права запрашивает приложение. Это важно для выявления потенциально опасных действий.
+Fake GPS Location - легко изменить своё местоположение GPS.
+https://upload.app/download/fake-gps-location/com.hopefactory2021.fakegpslocation/b03356e6200024a86277d4dacbaef03aebaab138fc507a623bbdac05601552c6
 """,
             'prev': 'decompile_apk',
             'next': 'static_analysis'
