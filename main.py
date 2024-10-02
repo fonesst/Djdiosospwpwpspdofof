@@ -506,6 +506,8 @@ def send_welcome(message):
         "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
         "├ 🌎 Скачивание файлов с сайта: /parse\n"
         "└ 🌏 Создание простого сайта [.zip файл]: /createsite\n\n"
+        "🅰🅿🅺 Полезные приложения для hacking\n"
+        "└/apks\n\n"
         "💬 Доступ к OSINT сервисам и инструментам\n"
         "└ в разработке"
     )
@@ -1123,7 +1125,120 @@ def handle_cadastral_number(message):
 def shutdown():
     close_driver()
 
+@bot.message_handler(commands=['apks'])
+def handle_apks(message):
+    apks_info = """
+Привет! Ты попал в мир анализа APK-файлов.
 
+Здесь ты найдешь различные инструменты для декомпиляции, анализа, проверки и исследования приложений на Android. Выбери нужную опцию:
+"""
+    keyboard = InlineKeyboardMarkup()
+    buttons = [
+        InlineKeyboardButton(text="Декомпиляция APK", callback_data="decompile_apk"),
+        InlineKeyboardButton(text="Анализ разрешений", callback_data="analyze_permissions"),
+        InlineKeyboardButton(text="Статический анализ", callback_data="static_analysis"),
+        InlineKeyboardButton(text="Динамический анализ", callback_data="dynamic_analysis"),
+        InlineKeyboardButton(text="Подпись APK", callback_data="sign_apk"),
+        InlineKeyboardButton(text="Проверка на вирусы", callback_data="virus_check"),
+        InlineKeyboardButton(text="APKTool", callback_data="apktool"),
+        InlineKeyboardButton(text="JADX GUI", callback_data="jadx_gui"),
+        InlineKeyboardButton(text="Анализ DEX", callback_data="dex_analysis"),
+        InlineKeyboardButton(text="Прочие инструменты", callback_data="other_tools")
+    ]
+    keyboard.add(*buttons[:2])
+    keyboard.add(*buttons[2:4])
+    keyboard.add(*buttons[4:6])
+    keyboard.add(*buttons[6:8])
+    keyboard.add(*buttons[8:])
+
+    bot.send_message(message.chat.id, apks_info, reply_markup=keyboard)
+
+@bot.callback_query_handler(func=lambda call: call.data in ['decompile_apk', 'analyze_permissions', 'static_analysis', 'dynamic_analysis', 'sign_apk', 'virus_check', 'apktool', 'jadx_gui', 'dex_analysis', 'other_tools'])
+def handle_apks_topics(call):
+    bot.answer_callback_query(call.id)
+
+    topics = {
+        'decompile_apk': {
+            'text': """
+Декомпиляция APK позволяет извлечь исходный код приложения. Используй инструменты, такие как APKTool или JADX для обратной разработки.
+""",
+            'prev': 'osint_services',
+            'next': 'analyze_permissions'
+        },
+        'analyze_permissions': {
+            'text': """
+Анализ разрешений позволяет определить, какие права запрашивает приложение. Это важно для выявления потенциально опасных действий.
+""",
+            'prev': 'decompile_apk',
+            'next': 'static_analysis'
+        },
+        'static_analysis': {
+            'text': """
+Статический анализ позволяет исследовать APK без его выполнения, изучая код и структуру файлов.
+""",
+            'prev': 'analyze_permissions',
+            'next': 'dynamic_analysis'
+        },
+        'dynamic_analysis': {
+            'text': """
+Динамический анализ включает выполнение приложения для изучения его поведения в реальном времени.
+""",
+            'prev': 'static_analysis',
+            'next': 'sign_apk'
+        },
+        'sign_apk': {
+            'text': """
+Подпись APK — это важный шаг для развертывания приложения. Здесь ты узнаешь, как правильно подписывать APK-файлы.
+""",
+            'prev': 'dynamic_analysis',
+            'next': 'virus_check'
+        },
+        'virus_check': {
+            'text': """
+Проверка APK на вирусы и вредоносные программы с использованием различных онлайн-сервисов и антивирусных программ.
+""",
+            'prev': 'sign_apk',
+            'next': 'apktool'
+        },
+        'apktool': {
+            'text': """
+APKTool — мощный инструмент для декомпиляции и повторной компиляции APK. Используй его для редактирования исходного кода.
+""",
+            'prev': 'virus_check',
+            'next': 'jadx_gui'
+        },
+        'jadx_gui': {
+            'text': """
+JADX GUI — графический интерфейс для декомпиляции APK и изучения Java-кода приложений.
+""",
+            'prev': 'apktool',
+            'next': 'dex_analysis'
+        },
+        'dex_analysis': {
+            'text': """
+Анализ DEX-файлов — это изучение байт-кода приложения, который содержит основную логику работы программы.
+""",
+            'prev': 'jadx_gui',
+            'next': 'other_tools'
+        },
+        'other_tools': {
+            'text': """
+Прочие инструменты для анализа APK, такие как MobSF, JADX, Androguard и другие, помогут исследовать приложения более глубоко.
+""",
+            'prev': 'dex_analysis',
+            'next': 'osint_services'
+        }
+    }
+
+    topic_info = topics[call.data]
+    keyboard = InlineKeyboardMarkup()
+    keyboard.row(
+        InlineKeyboardButton("Назад", callback_data=topic_info['prev']),
+        InlineKeyboardButton("Вперед", callback_data=topic_info['next'])
+    )
+
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=topic_info['text'], reply_markup=keyboard)
+    
 # Запуск бота
 try:
     bot.polling(none_stop=True)
