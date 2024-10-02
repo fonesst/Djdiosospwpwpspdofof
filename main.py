@@ -1125,6 +1125,9 @@ def handle_cadastral_number(message):
 def shutdown():
     close_driver()
 
+
+
+# Функционал команды /apks
 @bot.message_handler(commands=['apks'])
 def handle_apks(message):
     apks_info = """
@@ -1153,7 +1156,8 @@ def handle_apks(message):
 
     bot.send_message(message.chat.id, apks_info, reply_markup=keyboard)
 
-@bot.callback_query_handler(func=lambda call: call.data in ['decompile_apk', 'analyze_permissions', 'static_analysis', 'dynamic_analysis', 'sign_apk', 'virus_check', 'apktool', 'jadx_gui', 'dex_analysis', 'other_tools'])
+
+@bot.callback_query_handler(func=lambda call: call.data in ['decompile_apk', 'analyze_permissions', 'static_analysis', 'dynamic_analysis', 'sign_apk', 'virus_check', 'apktool', 'jadx_gui', 'dex_analysis', 'other_tools', 'return_to_menu'])
 def handle_apks_topics(call):
     bot.answer_callback_query(call.id)
 
@@ -1162,7 +1166,7 @@ def handle_apks_topics(call):
             'text': """
 Декомпиляция APK позволяет извлечь исходный код приложения. Используй инструменты, такие как APKTool или JADX для обратной разработки.
 """,
-            'prev': 'osint_services',
+            'prev': None,  # Первая тема, нет кнопки "Назад"
             'next': 'analyze_permissions'
         },
         'analyze_permissions': {
@@ -1226,18 +1230,37 @@ JADX GUI — графический интерфейс для декомпиля
 Прочие инструменты для анализа APK, такие как MobSF, JADX, Androguard и другие, помогут исследовать приложения более глубоко.
 """,
             'prev': 'dex_analysis',
-            'next': 'osint_services'
+            'next': None  # Последняя тема, нет кнопки "Вперед"
         }
     }
 
+    if call.data == 'return_to_menu':
+        handle_apks(call.message)
+        return
+
     topic_info = topics[call.data]
+    
+    # Создаем клавиатуру для навигации
     keyboard = InlineKeyboardMarkup()
-    keyboard.row(
-        InlineKeyboardButton("Назад", callback_data=topic_info['prev']),
-        InlineKeyboardButton("Вперед", callback_data=topic_info['next'])
-    )
+
+    if topic_info['prev']:
+        prev_button = InlineKeyboardButton("Назад", callback_data=topic_info['prev'])
+        keyboard.add(prev_button)
+
+    if topic_info['next']:
+        next_button = InlineKeyboardButton("Вперед", callback_data=topic_info['next'])
+        keyboard.add(next_button)
+    else:
+        # Если это последняя тема, кнопка "Вперед" не добавляется
+        last_button = InlineKeyboardButton("Конец списка", callback_data='end_of_list')
+        keyboard.add(last_button)
+
+    # Кнопка для возврата в меню
+    return_button = InlineKeyboardButton("Вернуться в меню", callback_data='return_to_menu')
+    keyboard.add(return_button)
 
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=topic_info['text'], reply_markup=keyboard)
+# Конец команды /apks
     
 # Запуск бота
 try:
