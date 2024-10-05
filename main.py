@@ -88,6 +88,7 @@ def handle_osint(message):
         InlineKeyboardButton(text="VPN", callback_data="vpns"),
         InlineKeyboardButton(text="Ошибки хакеров", callback_data="hackermistakes"),
         InlineKeyboardButton(text="Google Dork", callback_data="googledork"),
+        InlineKeyboardButton(text="VPN VS PROXY", callback_data="vpntoproxy"),
     ]
     keyboard.add(*buttons)
 
@@ -437,6 +438,13 @@ SQL-инъекция — способ взлома баз данных чере�
 https://telegra.ph/Google-Dork-09-11
 """,
             'prev': 'hackermistakes',
+            'next': 'vpntoproxy'
+},
+'vpntoproxy': {
+            'text': """
+Proxy to Bpn
+""",
+            'prev': 'googledork',
             'next': 'osint_services'
       }  
 }
