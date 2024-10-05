@@ -94,7 +94,7 @@ def handle_osint(message):
 
     bot.send_message(message.chat.id, osint_info, reply_markup=keyboard)
 
-@bot.callback_query_handler(func=lambda call: call.data in ['netstalking', 'onion', 'telegram_bots', 'anonymity', 'vk', 'nickname', 'searchtg', 'car', 'intelligence_x', 'webwhois', 'terms', 'photo', 'osintetaps', 'vpns', 'hackermistakes', 'googledork'])
+@bot.callback_query_handler(func=lambda call: call.data in ['netstalking', 'onion', 'telegram_bots', 'anonymity', 'vk', 'nickname', 'searchtg', 'car', 'intelligence_x', 'webwhois', 'terms', 'photo', 'osintetaps', 'vpns', 'hackermistakes', 'googledork', 'vpntoproxy'])
 def handle_osint_topics(call):
     bot.answer_callback_query(call.id)
 
