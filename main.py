@@ -1277,7 +1277,7 @@ def handle_apks(message):
         InlineKeyboardButton(text="Apk Mods Store", callback_data="decompile_apk"),
         InlineKeyboardButton(text="Fake GPS Location", callback_data="analyze_permissions"),
         InlineKeyboardButton(text="Password Manager", callback_data="static_analysis"),
-        InlineKeyboardButton(text="Динамический анализ", callback_data="dynamic_analysis"),
+        InlineKeyboardButton(text="WI-FI", callback_data="dynamic_analysis"),
         InlineKeyboardButton(text="Подпись APK", callback_data="sign_apk"),
         InlineKeyboardButton(text="Проверка на вирусы", callback_data="virus_check"),
         InlineKeyboardButton(text="APKTool", callback_data="apktool"),
@@ -1325,7 +1325,23 @@ https://play.google.com/store/apps/details?id=com.korovan.kpass
         },
         'dynamic_analysis': {
             'text': """
-Динамический анализ включает выполнение приложения для изучения его поведения в реальном времени.
+1. WiFiMan - скенер сети, обноружение сетевых устройств, и много других плюшек
+https://play.google.com/store/apps/details?id=com.ubnt.usurvey
+
+2. Wigle WiFi - список сетей, карта сетей по GPS, база данных, исследование сетей
+https://play.google.com/store/apps/details?id=net.wigle.wigleandroid
+
+3.  WiFi Tools - узнать многл чего о вашем устройстве, маршрутизаторе.
+https://play.google.com/store/apps/details?id=com.ddm.iptoolslight
+
+4. WpsApp - взлом Wifi сетей
+https://play.google.com/store/apps/details?id=com.themausoft.wpsapp
+
+5. WiFi File Transfer - поделиться файлами с помощью WiFi, без интернета
+https://upload.app/download/wifi-file-transfer-pro/com.smarterdroid.wififiletransferpro/1ac9ea8f9f8e95d2ca9ae9dc5fc534111fd7c7749275c9b4ee9ad4c2ec652f24
+
+6. WiFi клавиатура - использование пк для взаимодействия с клавиатурой телефона
+https://upload.app/download/wifikeyboard/com.volosyukivan/38374bb6573c4dca9fd58788ba120542b0aac592c55f276d4b0bbbe957d4a3dc
 """,
             'prev': 'static_analysis',
             'next': 'sign_apk'
