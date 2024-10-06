@@ -661,9 +661,11 @@ def callback_check_subscription(call):
         "└ 🌏 Создание простого сайта [.zip файл]: /createsite\n\n"
         "🅰🅿🅺 Полезные приложения для hacking\n"
         "└/apks\n\n"
+        "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
+        "└/dorks\n\n"
         "💬 Доступ к OSINT сервисам и инструментам\n"
         "└ в разработке"
-    )
+        )
         bot.edit_message_text(chat_id=call.message.chat.id, 
                               message_id=call.message.message_id, 
                               text=welcome_text)
@@ -1274,7 +1276,7 @@ def handle_apks(message):
     buttons = [
         InlineKeyboardButton(text="Apk Mods Store", callback_data="decompile_apk"),
         InlineKeyboardButton(text="Fake GPS Location", callback_data="analyze_permissions"),
-        InlineKeyboardButton(text="Статический анализ", callback_data="static_analysis"),
+        InlineKeyboardButton(text="Password Manager", callback_data="static_analysis"),
         InlineKeyboardButton(text="Динамический анализ", callback_data="dynamic_analysis"),
         InlineKeyboardButton(text="Подпись APK", callback_data="sign_apk"),
         InlineKeyboardButton(text="Проверка на вирусы", callback_data="virus_check"),
@@ -1315,7 +1317,8 @@ https://upload.app/download/fake-gps-location/com.hopefactory2021.fakegpslocatio
         },
         'static_analysis': {
             'text': """
-Статический анализ позволяет исследовать APK без его выполнения, изучая код и структуру файлов.
+KPASS - сохранение своих паролей в надёжном месте, всё сохраняется в одном файле, есть экспорт файла.
+https://play.google.com/store/apps/details?id=com.korovan.kpass
 """,
             'prev': 'analyze_permissions',
             'next': 'dynamic_analysis'
