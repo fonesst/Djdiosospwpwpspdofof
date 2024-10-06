@@ -1,3 +1,4 @@
+# Начало библиотек
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import requests
@@ -24,21 +25,26 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from kadastr import parse_opendatabot_page, close_driver
-from selenium.webdriver.common.by import By
+from selenium.webdriver.common.by import By 
+# Конец библиотек
 
-# Настройка логированияяяяяя
+
+# Настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+# Конец настройки логирования
 
+# Константы, переменные конфигурации
 API_KEY = '7368730334:AAH9xUG8G_Ro8mvV_fDQxd5ddkwjxHnBoeg'
 ADMIN_CHAT_ID = '1653222949'
 GEMINI_API_KEY = 'AIzaSyCzgAreGdXqUXZd5-P_iLUg-3hM9U4Md70'
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 CHANNEL_ID = '@fronest_news'
+# Конец констант и переменных конфигураций
 
 bot = telebot.TeleBot(API_KEY)
 
-# Функция OSINT Сервисоввв
+# Функция OSINT Сервисов /osint
 @bot.message_handler(commands=['osint'])
 def handle_osint(message):
     osint_info = """
@@ -455,6 +461,7 @@ VPN:
     )
 
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=topic_info['text'], reply_markup=keyboard)
+# Конец функции OSINT сервисов /osint
 
 
 
@@ -470,8 +477,7 @@ VPN:
 
 
 
-
-# Функция приветствия
+# Функция приветствия /start
 def check_subscription(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_ID, user_id)
@@ -545,6 +551,8 @@ def callback_check_subscription(call):
         "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
         "├ 🌎 Скачивание файлов с сайта: /parse\n"
         "└ 🌏 Создание простого сайта [.zip файл]: /createsite\n\n"
+        "🅰🅿🅺 Полезные приложения для hacking\n"
+        "└/apks\n\n"
         "💬 Доступ к OSINT сервисам и инструментам\n"
         "└ в разработке"
     )
@@ -553,8 +561,7 @@ def callback_check_subscription(call):
                               text=welcome_text)
     else:
         bot.answer_callback_query(call.id, "Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.")
-
-# ... (остальной код остается без изменений)
+# Конец команды /start
 
 
 
@@ -571,7 +578,7 @@ user_texts = {}
 user_titles = {}
 user_urls = {}
 
-# Обработчик кнопок для действий "СДЕЛАТЬ СКРИНШОТ" и "ИЗВЛЕЧЬ ТЕКСТ"
+# Команда /opensite
 @bot.message_handler(commands=['opensite'])
 def handle_opensite(message):
     # Отображаем клавиатуру с действиями
@@ -740,7 +747,7 @@ def callback_query(call):
         error_message = f"Ошибка при обработке callback query: {str(e)}"
         bot.send_message(chat_id, error_message)
         bot.answer_callback_query(call.id, "Произошла ошибка при обработке вашего запроса.")
-    
+# Конец команды /opensite
 
 
 
@@ -749,7 +756,7 @@ def callback_query(call):
 
 
 
-
+# Команда /phonelookup
 @bot.message_handler(commands=['phonelookup'])
 def handle_phonelookup(message):
     msg = bot.send_message(message.chat.id, "Введите номер телефона в международном формате (например, +380...):")
@@ -774,9 +781,10 @@ def process_phone_lookup(message):
         bot.send_message(message.chat.id, response, reply_markup=markup)
     else:
         bot.reply_to(message, response)
+# Конец команды /phonelookup
 
 
-
+# Команда /createsite
 @bot.message_handler(commands=['createsite'])
 def handle_createsite(message):
     msg = bot.send_message(message.chat.id, "Введите название для нового сайта:")
@@ -807,8 +815,11 @@ def process_site_files(message, repo):
     else:
         bot.reply_to(message, "Пожалуйста, отпра вьте ZIP-файл.")
         bot.register_next_step_handler(message, process_site_files, repo)
+# Конец команды /createsite
 
 
+
+# Команда /search
 @bot.message_handler(commands=['search'])
 def handle_search(message):
     show_search_engines(message)
@@ -887,7 +898,10 @@ def handle_pagination(call):
 
     # Отвечаем на callback query, чтобы убрать "часы загрузки" на кнопке
     bot.answer_callback_query(call.id)
+# Конец команды /search
 
+
+# Команда /mask
 @bot.message_handler(commands=['mask'])
 def handle_mask(message):
     msg = bot.send_message(message.chat.id, "Введите ссылку для маскировки:")
@@ -897,7 +911,10 @@ def process_link_masking(message):
     link = message.text
     masked_links = masklink(link)
     bot.reply_to(message, masked_links)
+# Конец команды /mask
 
+
+# Команда /сheckip
 @bot.message_handler(commands=['checkip'])
 def handle_checkip(message):
     msg = bot.send_message(message.chat.id, "Введите IP-адрес для проверки:")
@@ -916,9 +933,11 @@ def process_ip_check(message):
         os.remove(screenshot_path)
     else:
         bot.reply_to(message, "Произошла ошибка при получении данных. Попробуйте снова.")
+# Конец команды /checkip
 
-# ... (остальные функции остаются без изменений)
 
+
+# Команда /parse
 @bot.message_handler(commands=['parse'])
 def handle_parse(message):
     msg = bot.send_message(message.chat.id, "Введите ссылку для скачивания файлов сайта [BETA]:")
@@ -939,8 +958,10 @@ def process_parse_site(message):
         bot.send_message(message.chat.id, "Вот ваш ZIP-файл, содержащий все файлы из корневой директории!")
     else:
         bot.send_message(message.chat.id, "Не удалось найти файлы для скачивания.")
+# Конец команды /parse
 
-# gemini.py
+
+# Команда /gemini
 @bot.message_handler(commands=['gemini'])
 def handle_gemini(message):
     msg = bot.send_message(message.chat.id, "Введите запрос для Gemini:")
@@ -951,10 +972,12 @@ def process_gemini_query(message):
     bot.send_message(message.chat.id, "Обрабатываю ваш запрос. Это может занять некоторое время...")
     response = perform_gemini_with_aol_search(query)
     bot.reply_to(message, response)
+# Конец команды /gemini
 
 
 
 
+# Команда /geoint
 # Функция для проверки, является ли строка кадастровым номером
 def is_cadastral_number(text):
     return ':' in text and any(char.isdigit() for char in text) and not text.startswith(('http://', 'https://'))
@@ -1128,7 +1151,7 @@ def handle_cadastral_number(message):
 # Функция для закрытия драйвера при завершении работы
 def shutdown():
     close_driver()
-
+# Конец команды /geoint 
 
 
 # Функционал команды /apks
@@ -1269,115 +1292,7 @@ JADX GUI — графический интерфейс для декомпиля
 # Конец команды /apks
 
 
-
-# Глобальная переменная для хранения запроса пользователя
-user_query = {}
-
-# Словарь категорий и расширений файлов
-file_categories = {
-    "Текстовые файлы": ['txt', 'md', 'log', 'csv', 'xml', 'json', 'yaml', 'yml', 'ini', 'rtf', 'doc', 'docx', 'pdf'],
-    "Табличные файлы": ['xls', 'xlsx', 'ods', 'csv', 'tsv'],
-    "Базы данных": ['db', 'sqlite', 'sqlite3', 'sql', 'mdb', 'accdb'],
-    "Изображения": ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg'],
-    "Аудио файлы": ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'],
-    "Видео файлы": ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv'],
-    "Архивы и сжатие": ['zip', 'rar', '7z', 'tar', 'gz'],
-    "Файлы кодирования и сценариев": ['py', 'js', 'html', 'css', 'php', 'cpp', 'java'],
-    "Документы": ['pdf', 'doc', 'docx', 'odt', 'rtf'],
-    "Системные файлы": ['exe', 'dll', 'sys', 'bat', 'ini'],
-    "3D Моделирование и графика": ['obj', 'fbx', 'stl', 'blend'],
-    "Виртуальные машины и контейнеры": ['vdi', 'vmdk', 'dockerfile'],
-    "Другие специализированные файлы": ['torrent', 'ics', 'apk', 'ipa']
-}
-
-def perform_google_search(query, filetype, start=0, max_results=100):
-    all_results = []
-    while len(all_results) < max_results:
-        search_query = f"{query} filetype:{filetype}"
-        url = f"https://www.google.com/search?q={urllib.parse.quote(search_query)}&start={start}"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        results = soup.find_all('div', class_='g')
-        if not results:
-            break
-
-        for result in results:
-            link = result.find('a', href=True)
-            if link:
-                url = link['href']
-                domain = urllib.parse.urlparse(url).netloc
-                all_results.append((domain, url))
-                if len(all_results) >= max_results:
-                    break
-
-        start += 10
-        time.sleep(1)
-
-    return all_results
-
-def save_results_to_file(results, category, filetype, base_dir):
-    # Создаем папку для сохранения файлов по категориям и типам
-    category_dir = os.path.join(base_dir, category, filetype.upper())
-    os.makedirs(category_dir, exist_ok=True)
     
-    # Сохраняем результаты в формате .txt, но в папке с расширением файла
-    for domain, url in results:
-        # Всегда сохраняем файл как .txt
-        file_path = os.path.join(category_dir, f'{domain}.txt')
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(url)
-
-def create_zip_structure(base_dir, zip_name='all_results.zip'):
-    with zipfile.ZipFile(zip_name, 'w') as zipf:
-        for folder, subfolders, files in os.walk(base_dir):
-            for file in files:
-                file_path = os.path.join(folder, file)
-                archive_path = os.path.relpath(file_path, base_dir)
-                zipf.write(file_path, archive_path)
-
-@bot.message_handler(commands=['dorks'])
-def handle_dorks_command(message):
-    bot.send_message(message.chat.id, "Введите текст для поиска:")
-    bot.register_next_step_handler(message, get_user_query)
-
-def get_user_query(message):
-    user_query[message.chat.id] = message.text
-    bot.send_message(message.chat.id, "Ищу файлы по вашему запросу. Это может занять некоторое время...")
-
-    base_dir = 'search_results'
-    if os.path.exists(base_dir):
-        for root, dirs, files in os.walk(base_dir, topdown=False):
-            for name in files:
-                os.remove(os.path.join(root, name))
-            for name in dirs:
-                os.rmdir(os.path.join(root, name))
-    os.makedirs(base_dir, exist_ok=True)
-
-    for category, extensions in file_categories.items():
-        bot.send_message(message.chat.id, f"Поиск в категории '{category}'...")
-        
-        for filetype in extensions:
-            search_results = perform_google_search(user_query[message.chat.id], filetype)
-            if search_results:
-                save_results_to_file(search_results, category, filetype, base_dir)
-                bot.send_message(message.chat.id, f"Найдено {len(search_results)} результатов для типа {filetype}")
-
-    zip_path = 'all_results.zip'
-    create_zip_structure(base_dir, zip_path)
-
-    with open(zip_path, 'rb') as zip_file:
-        bot.send_document(message.chat.id, zip_file)
-
-    os.remove(zip_path)
-
-    bot.send_message(message.chat.id, "Поиск завершен. Результаты отправлены в виде ZIP-архива.")
-
-
-
 # Запуск бота
 try:
     bot.polling(none_stop=True)
