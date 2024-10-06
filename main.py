@@ -38,26 +38,6 @@ CHANNEL_ID = '@fronest_news'
 
 bot = telebot.TeleBot(API_KEY)
 
-def create_inline_keyboard():
-    keyboard = InlineKeyboardMarkup()
-    search_button = InlineKeyboardButton('ПОИСКОВИКИ', callback_data='search_engines')
-    mask_button = InlineKeyboardButton('МАСКИРОВАТЬ ССЫЛКУ', callback_data='mask')
-    ip_button = InlineKeyboardButton('ПРОВЕРИТЬ IP', callback_data='check_ip')
-    gemini_button = InlineKeyboardButton('GEMINI INTERNET', callback_data='gemini')
-    parse_sites_button = InlineKeyboardButton('ПАРС САЙТОВ', callback_data='parse_sites')
-    create_site_button = InlineKeyboardButton('СОЗДАТЬ САЙТ', callback_data='create_site')
-    phone_lookup_button = InlineKeyboardButton('ПРОБИВ НОМЕРА', callback_data='phone_lookup')
-    open_site_button = InlineKeyboardButton('ОТКРЫТЬ САЙТ', callback_data='open_site')
-    osint_button = InlineKeyboardButton('OSINT СЕРВИСЫ', callback_data='osint_services')  # Новая кнопка
-    keyboard.add(search_button)
-    keyboard.add(mask_button, ip_button)
-    keyboard.add(gemini_button, parse_sites_button)
-    keyboard.add(create_site_button)
-    keyboard.add(phone_lookup_button)
-    keyboard.add(open_site_button)
-    keyboard.add(osint_button)  # Добавляем новую кнопку
-    return keyboard
-
 # Функция OSINT Сервисоввв
 @bot.message_handler(commands=['osint'])
 def handle_osint(message):
