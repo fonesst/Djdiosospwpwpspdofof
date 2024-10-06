@@ -1270,10 +1270,8 @@ JADX GUI — графический интерфейс для декомпиля
 
 
 
-
-
+# Глобальная переменная для хранения запроса пользователя
 user_query = {}
-base_dir = 'search_results'
 
 # Словарь категорий и расширений файлов
 file_categories = {
@@ -1322,10 +1320,13 @@ def perform_google_search(query, filetype, start=0, max_results=100):
     return all_results
 
 def save_results_to_file(results, category, filetype, base_dir):
+    # Создаем папку для сохранения файлов по категориям и типам
     category_dir = os.path.join(base_dir, category, filetype.upper())
     os.makedirs(category_dir, exist_ok=True)
     
+    # Сохраняем результаты в формате .txt, но в папке с расширением файла
     for domain, url in results:
+        # Всегда сохраняем файл как .txt
         file_path = os.path.join(category_dir, f'{domain}.txt')
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(url)
@@ -1338,22 +1339,8 @@ def create_zip_structure(base_dir, zip_name='all_results.zip'):
                 archive_path = os.path.relpath(file_path, base_dir)
                 zipf.write(file_path, archive_path)
 
-def clear_data(chat_id):
-    # Очистка глобальных переменных
-    if chat_id in user_query:
-        del user_query[chat_id]
-    
-    # Удаление директории с результатами поиска
-    if os.path.exists(base_dir):
-        shutil.rmtree(base_dir)
-    
-    # Удаление ZIP-файла, если он существует
-    if os.path.exists('all_results.zip'):
-        os.remove('all_results.zip')
-
 @bot.message_handler(commands=['dorks'])
 def handle_dorks_command(message):
-    clear_data(message.chat.id)  # Очистка данных перед новым поиском
     bot.send_message(message.chat.id, "Введите текст для поиска:")
     bot.register_next_step_handler(message, get_user_query)
 
@@ -1361,6 +1348,13 @@ def get_user_query(message):
     user_query[message.chat.id] = message.text
     bot.send_message(message.chat.id, "Ищу файлы по вашему запросу. Это может занять некоторое время...")
 
+    base_dir = 'search_results'
+    if os.path.exists(base_dir):
+        for root, dirs, files in os.walk(base_dir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
     os.makedirs(base_dir, exist_ok=True)
 
     for category, extensions in file_categories.items():
@@ -1378,9 +1372,9 @@ def get_user_query(message):
     with open(zip_path, 'rb') as zip_file:
         bot.send_document(message.chat.id, zip_file)
 
-    bot.send_message(message.chat.id, "Поиск завершен. Результаты отправлены в виде ZIP-архива.")
-    clear_data(message.chat.id)  # Очистка данных после завершения поиска
+    os.remove(zip_path)
 
+    bot.send_message(message.chat.id, "Поиск завершен. Результаты отправлены в виде ZIP-архива.")
 
 
 
