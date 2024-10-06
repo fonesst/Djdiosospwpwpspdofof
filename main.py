@@ -97,10 +97,19 @@ def get_user_query(message):
     os.makedirs(base_dir, exist_ok=True)
 
     file_categories = {
-        "Текстовые файлы": ['txt', 'pdf'],
-        "Изображения": ['jpg', 'png'],
-        "Видео файлы": ['mp4', 'avi'],
-        "Архивы": ['zip', 'rar']
+    "Текстовые файлы": ['txt', 'md', 'log', 'csv', 'xml', 'json', 'yaml', 'yml', 'ini', 'rtf', 'doc', 'docx', 'pdf'],
+    "Табличные файлы": ['xls', 'xlsx', 'ods', 'csv', 'tsv'],
+    "Базы данных": ['db', 'sqlite', 'sqlite3', 'sql', 'mdb', 'accdb'],
+    "Изображения": ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'svg'],
+    "Аудио файлы": ['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'],
+    "Видео файлы": ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv'],
+    "Архивы и сжатие": ['zip', 'rar', '7z', 'tar', 'gz'],
+    "Файлы кодирования и сценариев": ['py', 'js', 'html', 'css', 'php', 'cpp', 'java'],
+    "Документы": ['pdf', 'doc', 'docx', 'odt', 'rtf'],
+    "Системные файлы": ['exe', 'dll', 'sys', 'bat', 'ini'],
+    "3D Моделирование и графика": ['obj', 'fbx', 'stl', 'blend'],
+    "Виртуальные машины и контейнеры": ['vdi', 'vmdk', 'dockerfile'],
+    "Другие специализированные файлы": ['torrent', 'ics', 'apk', 'ipa']
     }
     
     for category, extensions in file_categories.items():
