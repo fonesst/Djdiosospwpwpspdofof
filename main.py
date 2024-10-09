@@ -147,7 +147,7 @@ def create_zip_structure(base_dir, zip_name='all_results.zip'):
                 file_path = os.path.join(folder, file)
                 archive_path = os.path.relpath(file_path, base_dir)
                 zipf.write(file_path, archive_path)
-
+# Конец команды /dorks
         
 
 # Функция OSINT Сервисов /osint
