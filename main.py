@@ -588,7 +588,7 @@ https://telegra.ph/Google-Dork-09-11
 --------------------
 
 Продолжить читать:
-
+https://telegra.ph/Prodolzhenie-soobshcheniya-10-10
 """,
             'prev': 'googledork',
             'next': 'osint_services'
