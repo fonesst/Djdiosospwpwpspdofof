@@ -659,7 +659,7 @@ def send_welcome(message):
         "🌐 Взаимодействие с сайтами\n"
         "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
         "├ 🌎 Скачивание файлов с сайта: /parse\n"
-        "└ 🌏 Создание простого сайта [.zip файл]: /createsite\n\n"
+        "└ 🌏 Создание простого сайта [.zip файл]: Функция в BETA-тесте и ограничена/n/n"
         "🅰🅿🅺 Полезные приложения для hacking\n"
         "└/apks\n\n"
         "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
@@ -696,7 +696,7 @@ def callback_check_subscription(call):
         "🌐 Взаимодействие с сайтами\n"
         "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
         "├ 🌎 Скачивание файлов с сайта: /parse\n"
-        "└ 🌏 Создание простого сайта [.zip файл]: /createsite\n\n"
+        "└ 🌏 Создание простого сайта [.zip файл]: Функция в BETA-тесте и ограничена/n/n"
         "🅰🅿🅺 Полезные приложения для hacking\n"
         "└/apks\n\n"
         "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
@@ -1279,6 +1279,12 @@ def send_photos_with_buttons(chat_id, lat, lon):
     markup = InlineKeyboardMarkup()
     markup.row(InlineKeyboardButton("Росреестр", url=rosreestr_url))
     bot.send_photo(chat_id, 'https://i.postimg.cc/L63PBmjz/1000475079.png', reply_markup=markup)
+
+    # 11 Сообщение
+    deepstate_url = f"https://deepstatemap.live/#18/{lat}/{lon}"
+    markup = InlineKeyboardMarkup()
+    markup.row(InlineKeyboardButton("DeepState", url=deepstate_url))
+    bot.send_photo(chat_id, 'https://i.postimg.cc/1zhr6J7x/1000476132.png', reply_markup=markup)
 
 # Обработчик ввода кадастрового номера
 @bot.message_handler(func=lambda message: is_cadastral_number(message.text))
