@@ -181,12 +181,13 @@ def handle_osint(message):
         InlineKeyboardButton(text="Ошибки хакеров", callback_data="hackermistakes"),
         InlineKeyboardButton(text="Google Dork", callback_data="googledork"),
         InlineKeyboardButton(text="ВСЁ О VPN", callback_data="vpntoproxy"),
+        InlineKeyboardButton(text="СЕРВИСЫ", callback_data="services"),
     ]
     keyboard.add(*buttons)
 
     bot.send_message(message.chat.id, osint_info, reply_markup=keyboard)
 
-@bot.callback_query_handler(func=lambda call: call.data in ['netstalking', 'onion', 'telegram_bots', 'anonymity', 'vk', 'nickname', 'searchtg', 'car', 'intelligence_x', 'webwhois', 'terms', 'photo', 'osintetaps', 'vpns', 'hackermistakes', 'googledork', 'vpntoproxy'])
+@bot.callback_query_handler(func=lambda call: call.data in ['netstalking', 'onion', 'telegram_bots', 'anonymity', 'vk', 'nickname', 'searchtg', 'car', 'intelligence_x', 'webwhois', 'terms', 'photo', 'osintetaps', 'vpns', 'hackermistakes', 'googledork', 'vpntoproxy', 'services'])
 def handle_osint_topics(call):
     bot.answer_callback_query(call.id)
 
@@ -591,6 +592,13 @@ https://telegra.ph/Google-Dork-09-11
 https://telegra.ph/Prodolzhenie-soobshcheniya-10-10
 """,
             'prev': 'googledork',
+            'next': 'services'
+},
+'services': {
+            'text': """
+Test
+""",
+            'prev': 'vpntoproxy',
             'next': 'osint_services'
       }  
 }
