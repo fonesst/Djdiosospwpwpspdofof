@@ -664,8 +664,6 @@ def send_welcome(message):
         "└  /checkip\n\n"
         "🤖 Использование Gemini AI для поиска и анализа\n"
         "└ /gemini\n\n"
-        "☎️ Поиск информации по номеру телефона\n"
-        "└ /phonelookup\n\n"
         "🌐 Взаимодействие с сайтами\n"
         "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
         "├ 🌎 Скачивание файлов с сайта: /parse\n"
@@ -674,6 +672,8 @@ def send_welcome(message):
         "└/apks\n\n"
         "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
         "└/dorks\n\n"
+        "👁 Пробив информации по людям\n"
+        "└/q\n\n"
         "💬 Доступ к OSINT сервисам и инструментам\n"
         "└ в разработке"
     )
@@ -701,8 +701,6 @@ def callback_check_subscription(call):
         "└  /checkip\n\n"
         "🤖 Использование Gemini AI для поиска и анализа\n"
         "└ /gemini\n\n"
-        "☎️ Поиск информации по номеру телефона\n"
-        "└ /phonelookup\n\n"
         "🌐 Взаимодействие с сайтами\n"
         "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
         "├ 🌎 Скачивание файлов с сайта: /parse\n"
@@ -711,6 +709,8 @@ def callback_check_subscription(call):
         "└/apks\n\n"
         "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
         "└/dorks\n\n"
+        "👁 Пробив информации по людям\n"
+        "└/q\n\n"
         "💬 Доступ к OSINT сервисам и инструментам\n"
         "└ в разработке"
         )
@@ -914,14 +914,15 @@ def callback_query(call):
 
 
 
-# Команда /phonelookup
-@bot.message_handler(commands=['phonelookup'])
-def handle_phonelookup(message):
-    msg = bot.send_message(message.chat.id, "Введите номер телефона в международном формате (например, +380...):")
-    bot.register_next_step_handler(msg, process_phone_lookup)
+# Обработчик сообщений с "pn"
+@bot.message_handler(func=lambda message: message.text.lower().startswith("pn"))
+def handle_phone_lookup_text(message):
+    phone_number = message.text[2:].strip()  # Удаляем "pn" и любые пробелы
 
-def process_phone_lookup(message):
-    phone_number = message.text.strip()
+    # Если номер не начинается с "+", добавляем его
+    if not phone_number.startswith("+"):
+        phone_number = "+" + phone_number
+
     response, original_number = phone_lookup(phone_number)
 
     if original_number:
@@ -939,7 +940,7 @@ def process_phone_lookup(message):
         bot.send_message(message.chat.id, response, reply_markup=markup)
     else:
         bot.reply_to(message, response)
-# Конец команды /phonelookup
+# Конец обработчика "pn"
 
 
 # Команда /createsite
