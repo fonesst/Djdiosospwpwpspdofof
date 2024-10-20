@@ -1,4 +1,4 @@
-# Начало библиотек
+# Начало библиотекk
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import requests
