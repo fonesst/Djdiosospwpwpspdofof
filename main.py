@@ -1620,6 +1620,9 @@ def handle_q(message):
 
 
 
+
+
+
 # Начало обработчика id
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
@@ -1646,7 +1649,7 @@ def handle_id_search(message):
 
 # Функция для получения содержимого файла users.csv с GitHub
 def get_users_file():
-    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/users.csv"
+    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.csv"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Content-Type": "application/json"
@@ -1679,28 +1682,71 @@ def find_user_info(user_id):
                 }
     return None
 
-# Функция для поиска в файле gb1.csv
+# Обработчик нажатий на кнопки с выбором платформы
+@bot.callback_query_handler(func=lambda call: call.data.startswith("search_"))
+def handle_search_callback(call):
+    direction, id_value = call.data.split("_")[1], call.data.split("_")[2]
+    
+    if direction == "telegram":
+        user_info = find_user_info(id_value)
+
+        if user_info:
+            report_text = (
+                f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
+                f" └  Telegram: id{id_value}\n\n"
+                f"📋 Отчёт содержит:\n"
+                f"├📧 ID: {user_info['id']}\n"
+                f"├📞 Телефон: {user_info['phone']}\n"
+                f"├👤 Юзернейм: {user_info['username']}\n"
+                f"├🏷 Имя Фамилия: {user_info['first_name']} {user_info['last_name']}\n"
+                f"├💬 Тип чата: {user_info['chat_type']}\n"
+                f"├🌎 Язык устройства: {user_info['language']}\n"
+                f"└📆 Дата добавления: {user_info['added_date']}"
+            )
+            
+            # Создаем инлайн кнопку "Проверить БД «глаз бога»"
+            keyboard = InlineKeyboardMarkup()
+            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+            keyboard.add(check_db_btn)
+            
+            # Отправляем сообщение с отчетом и кнопкой
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                                  text=report_text, reply_markup=keyboard)
+        else:
+            # Добавляем кнопку для поиска в "глазе бога" даже если информация не найдена
+            keyboard = InlineKeyboardMarkup()
+            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+            keyboard.add(check_db_btn)
+
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                                  text=f"Информация для id{id_value} не найдена.", reply_markup=keyboard)
+    else:
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                              text=f"Функция для поиска по {direction} пока не реализована.")
+
+# Функция для поиска в файлах gb0.csv и gb1.csv
 def search_in_gb_files(user_id):
-    file_name = 'gb1.csv'
-    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        content = response.json()['content']
-        decoded_content = base64.b64decode(content).decode('utf-8')
-        for line in decoded_content.splitlines():
-            parts = line.split(',')
-            if len(parts) >= 5 and parts[0].strip() == str(user_id):
-                return {
-                    "id": parts[0].strip(),
-                    "phone": parts[1].strip(),
-                    "username": parts[2].strip(),
-                    "first_name": parts[3].strip(),
-                    "last_name": parts[4].strip()
-                }
+    files_to_check = ['gb0.csv', 'gb1.csv']
+    for file_name in files_to_check:
+        url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            content = response.json()['content']
+            decoded_content = base64.b64decode(content).decode('utf-8')
+            for line in decoded_content.splitlines():
+                parts = line.split(',')
+                if len(parts) >= 5 and parts[0].strip() == str(user_id):
+                    return {
+                        "id": parts[0].strip(),
+                        "phone": parts[1].strip(),
+                        "username": parts[2].strip(),
+                        "first_name": parts[3].strip(),
+                        "last_name": parts[4].strip()
+                    }
     return None
 
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
@@ -1726,7 +1772,7 @@ def handle_check_db_callback(call):
             "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
             "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
             "База данных стала «утекшей» в июле 2021 года.\n\n"
-            "Информация не найдена в базе данных «Глаз Бога»."
+            f"Информация для id{id_value} не найдена в базе данных «Глаз Бога»."
         )
     
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
