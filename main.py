@@ -636,6 +636,7 @@ https://telegra.ph/Servisy-FRONEST-10-20
 
 
 # Функция приветствия /start
+# Функция для проверки подписки
 def check_subscription(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_ID, user_id)
@@ -643,6 +644,7 @@ def check_subscription(user_id):
     except telebot.apihelper.ApiException:
         return False
 
+# Функция для создания клавиатуры подписки
 def create_subscription_keyboard():
     keyboard = InlineKeyboardMarkup()
     url_button = InlineKeyboardButton(text="Подписаться на канал", url=f"https://t.me/{CHANNEL_ID[1:]}")
@@ -651,28 +653,53 @@ def create_subscription_keyboard():
     keyboard.add(check_button)
     return keyboard
 
+# Функция для запроса телефона
 def request_phone_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     phone_button = KeyboardButton(text="Отправить номер телефона", request_contact=True)
     keyboard.add(phone_button)
     return keyboard
 
+# Проверка наличия пользователя в users.csv
+def is_user_in_csv(user_id):
+    url = f"https://api.github.com/repos/{REPO}/contents/users.csv"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}"
+    }
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        content = base64.b64decode(response.json()['content']).decode('utf-8')
+        return str(user_id) in content
+    return False
+
+# Функция приветствия /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
-    if check_subscription(user_id):
+    
+    # Проверка наличия пользователя в users.csv
+    if is_user_in_csv(user_id):
         bot.send_message(
             message.chat.id,
-            "Для завершения регистрации отправьте свой номер телефона:",
-            reply_markup=request_phone_keyboard()
+            "Добро пожаловать! Вы уже зарегистрированы. Можете пользоваться ботом."
         )
     else:
-        bot.reply_to(
-            message, 
-            "Для использования бота необходимо подписаться на наш канал.",
-            reply_markup=create_subscription_keyboard()
-        )
+        # Проверка подписки на канал
+        if check_subscription(user_id):
+            bot.send_message(
+                message.chat.id,
+                "Для завершения регистрации отправьте свой номер телефона. Ваши данные останутся конфиденциальными и не будут переданы третьим лицам:",
+                reply_markup=request_phone_keyboard()
+            )
+        else:
+            bot.reply_to(
+                message,
+                "Для использования бота необходимо подписаться на наш канал.",
+                reply_markup=create_subscription_keyboard()
+            )
 
+# Обработка нажатия кнопки "Я подписался"
 @bot.callback_query_handler(func=lambda call: call.data == "check_subscription")
 def callback_check_subscription(call):
     user_id = call.from_user.id
@@ -680,12 +707,13 @@ def callback_check_subscription(call):
         bot.answer_callback_query(call.id, "Спасибо за подписку! Теперь отправьте свой номер телефона.")
         bot.send_message(
             call.message.chat.id,
-            "Для завершения регистрации отправьте свой номер телефона:",
+            "Для завершения регистрации отправьте свой номер телефона. Ваши данные останутся конфиденциальными и не будут переданы третьим лицам:",
             reply_markup=request_phone_keyboard()
         )
     else:
         bot.answer_callback_query(call.id, "Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.")
 
+# Обработка контакта (номера телефона)
 @bot.message_handler(content_types=['contact'])
 def handle_contact(message):
     if message.contact is not None:
@@ -725,6 +753,7 @@ def handle_contact(message):
         )
         bot.send_message(message.chat.id, welcome_text)
 
+# Обновление файла на GitHub
 def update_github_file(filename, new_data, message):
     url = f"https://api.github.com/repos/{REPO}/contents/{filename}"
     headers = {
@@ -751,7 +780,7 @@ def update_github_file(filename, new_data, message):
 
     response = requests.put(url, headers=headers, data=json.dumps(data))
 
-    if response.status_code == 200 or response.status_code == 201:
+    if response.status_code in [200, 201]:
         bot.send_message(message.chat.id, "Данные успешно сохранены на GitHub!")
     else:
         bot.send_message(message.chat.id, f"Ошибка при сохранении данных: {response.json().get('message')}")
