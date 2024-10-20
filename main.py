@@ -1592,7 +1592,7 @@ def handle_id_search(message):
 
 # Функция для получения содержимого файла users.csv с GitHub
 def get_users_file():
-    url = f"https://api.github.com/repos/название_аккаунта/usersFRONEST/contents/users.csv"
+    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.csv"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Content-Type": "application/json"
