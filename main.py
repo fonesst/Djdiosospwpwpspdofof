@@ -1623,12 +1623,12 @@ def handle_q(message):
 # Начало обработчика id
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
-    keyboard = types.InlineKeyboardMarkup()
-    btn_telegram = types.InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
-    btn_vk = types.InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
-    btn_ok = types.InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
-    btn_instagram = types.InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
-    btn_facebook = types.InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
+    keyboard = InlineKeyboardMarkup()
+    btn_telegram = InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
+    btn_vk = InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
+    btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
+    btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
+    btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
@@ -1637,7 +1637,7 @@ def create_search_direction_keyboard(id_value):
 # Обработчик сообщений, начинающихся с "id"
 @bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
 def handle_id_search(message):
-    id_value = message.text[2:].strip()  # Убираем "id" и пробелы
+    id_value = message.text[2:].strip()
     bot.reply_to(
         message,
         f"🆔 id{id_value}\n└  Выберите направление поиска",
@@ -1664,10 +1664,9 @@ def get_users_file():
 def find_user_info(user_id):
     users_data = get_users_file()
     if users_data:
-        user_id_numeric = user_id.lstrip("id")  # Убираем "id", если он есть
         for line in users_data:
             parts = line.split('|')
-            if len(parts) >= 8 and parts[1].strip() == str(user_id_numeric):
+            if len(parts) >= 8 and parts[1].strip() == str(user_id):
                 return {
                     "phone": parts[0].strip(),
                     "id": parts[1].strip(),
@@ -1701,17 +1700,23 @@ def handle_search_callback(call):
                 f"├🌎 Язык устройства: {user_info['language']}\n"
                 f"└📆 Дата добавления: {user_info['added_date']}"
             )
+            
+            # Создаем инлайн кнопку "Проверить БД «глаз бога»"
+            keyboard = InlineKeyboardMarkup()
+            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+            keyboard.add(check_db_btn)
+            
+            # Отправляем сообщение с отчетом и кнопкой
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                                  text=report_text, reply_markup=keyboard)
         else:
-            report_text = f"Информация для id{id_value} не найдена."
+            # Добавляем кнопку для поиска в "глазе бога" даже если информация не найдена
+            keyboard = InlineKeyboardMarkup()
+            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+            keyboard.add(check_db_btn)
 
-        # Создаем инлайн кнопку "Проверить БД «глаз бога»"
-        keyboard = types.InlineKeyboardMarkup()
-        check_db_btn = types.InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
-        keyboard.add(check_db_btn)
-
-        # Отправляем сообщение с отчетом и кнопкой
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                              text=report_text, reply_markup=keyboard)
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                                  text=f"Информация для id{id_value} не найдена.", reply_markup=keyboard)
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
@@ -1745,7 +1750,7 @@ def search_in_gb_files(user_id):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
     id_value = call.data.split("_")[2]
-    user_info = search_in_gb_files(id_value.lstrip("id"))  # Искать без "id"
+    user_info = search_in_gb_files(id_value)
     
     if user_info:
         report_text = (
@@ -1770,6 +1775,7 @@ def handle_check_db_callback(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                           text=report_text)
 # Конец обработчика id
+
 
 
 
