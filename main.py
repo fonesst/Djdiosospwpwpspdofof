@@ -636,48 +636,35 @@ https://telegra.ph/Servisy-FRONEST-10-20
 
 
 # Функция приветствия /start
-# Функция для проверки подписки
-def check_subscription(user_id):
-    try:
-        member = bot.get_chat_member(CHANNEL_ID, user_id)
-        return member.status in ['member', 'administrator', 'creator']
-    except telebot.apihelper.ApiException:
-        return False
-
-# Функция для создания клавиатуры подписки
-def create_subscription_keyboard():
-    keyboard = InlineKeyboardMarkup()
-    url_button = InlineKeyboardButton(text="Подписаться на канал", url=f"https://t.me/{CHANNEL_ID[1:]}")
-    check_button = InlineKeyboardButton(text="Я подписался", callback_data="check_subscription")
-    keyboard.add(url_button)
-    keyboard.add(check_button)
-    return keyboard
-
-# Функция для запроса телефона
-def request_phone_keyboard():
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    phone_button = KeyboardButton(text="Отправить номер телефона", request_contact=True)
-    keyboard.add(phone_button)
-    return keyboard
-
-# Проверка наличия пользователя в users.csv
+# Функция проверки пользователя в CSV
 def is_user_in_csv(user_id):
-    url = f"https://api.github.com/repos/{REPO}/contents/users.csv"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}"
-    }
-    response = requests.get(url, headers=headers)
+    # Логика проверки пользователя в файле users.csv
+    pass
 
-    if response.status_code == 200:
-        content = base64.b64decode(response.json()['content']).decode('utf-8')
-        return str(user_id) in content
-    return False
+# Функция проверки подписки
+def check_subscription(user_id):
+    # Логика проверки подписки на канал
+    pass
+
+# Клавиатура для запроса номера телефона
+def request_phone_keyboard():
+    keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    button = telebot.types.KeyboardButton("Отправить номер телефона", request_contact=True)
+    keyboard.add(button)
+    return keyboard
+
+# Клавиатура для подписки на канал
+def create_subscription_keyboard():
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    button = telebot.types.InlineKeyboardButton("Я подписался", callback_data="check_subscription")
+    keyboard.add(button)
+    return keyboard
 
 # Функция приветствия /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
-    
+
     # Проверка наличия пользователя в users.csv
     if is_user_in_csv(user_id):
         welcome_text = (
@@ -742,9 +729,26 @@ def handle_contact(message):
     if message.contact is not None:
         phone_number = message.contact.phone_number
         user_id = message.from_user.id
-        username = message.from_user.username or "Нет имени"
+        username = f"@{message.from_user.username}" if message.from_user.username else "Нет имени"
 
-        user_data = f"{phone_number} | {user_id} | {username}\n"
+        # Получаем дополнительные данные
+        chat_type = message.chat.type
+        language_code = message.from_user.language_code
+        first_name = message.from_user.first_name
+        last_name = message.from_user.last_name
+
+        # Сбор данных для записи
+        user_data = (
+            f"Номер телефона: {phone_number} | "
+            f"ID пользователя: {user_id} | "
+            f"Имя: {first_name} | "
+            f"Фамилия: {last_name} | "
+            f"Username: {username} | "
+            f"Тип чата: {chat_type} | "
+            f"Языковой код: {language_code}\n"
+        )
+
+        # Обновляем файл на GitHub
         update_github_file('users.csv', user_data, message)
 
         # Приветственное сообщение после отправки номера телефона
