@@ -11,6 +11,7 @@ import random
 import logging
 import zipfile
 import io
+from datetime import datetime
 from urllib.parse import urljoin, urlparse
 from search import perform_ahmia_search, perform_aol_search, perform_google_search, perform_bing_search
 from mask_link import masklink
@@ -630,11 +631,45 @@ https://telegra.ph/Servisy-FRONEST-10-20
 
 
 # Функция приветствия /start
+# Функция для создания клавиатуры с кнопкой запроса номера телефона
+def request_phone_keyboard():
+    keyboard = ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    button_phone = KeyboardButton(text="Отправить номер телефона", request_contact=True)
+    keyboard.add(button_phone)
+    return keyboard
+
+# Функция для создания инлайн-клавиатуры с кнопкой подписки
+def create_subscription_keyboard():
+    keyboard = InlineKeyboardMarkup()
+    url_button = InlineKeyboardButton(text="Подписаться на канал", url=f"https://t.me/{CHANNEL_ID[1:]}")
+    check_button = InlineKeyboardButton(text="Я подписался", callback_data="check_subscription")
+    keyboard.add(url_button)
+    keyboard.add(check_button)
+    return keyboard
+
+# Функция проверки подписки пользователя на канал
+def check_subscription(user_id):
+    try:
+        member = bot.get_chat_member(CHANNEL_ID, user_id)
+        return member.status in ['member', 'administrator', 'creator']
+    except telebot.apihelper.ApiException:
+        return False
+
+# Функция проверки наличия пользователя в CSV файле
+def is_user_in_csv(user_id):
+    url = f"https://api.github.com/repos/{REPO}/contents/users.csv"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        content = base64.b64decode(response.json()['content']).decode('utf-8')
+        return str(user_id) in content
+    return False
+
+# Функция приветствия /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
     
-    # Проверка наличия пользователя в users.csv
     if is_user_in_csv(user_id):
         welcome_text = (
             "Добро пожаловать в FRONEST (Free Resources of OSINT & Network Security Tools)!\n\n"
@@ -664,7 +699,6 @@ def send_welcome(message):
         )
         bot.send_message(message.chat.id, welcome_text)
     else:
-        # Проверка подписки на канал
         if check_subscription(user_id):
             bot.send_message(
                 message.chat.id,
@@ -707,8 +741,7 @@ def handle_contact(message):
         # Формируем строку с данными пользователя
         user_data = (
             f"{phone_number} | {user_id} | {username} | {first_name} | {last_name} | "
-            f"{chat_type} | {language_code} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-"
+            f"{chat_type} | {language_code} | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         )
 
         update_github_file('users.csv', user_data, message)
@@ -758,7 +791,8 @@ def update_github_file(filename, new_data, message):
         updated_content = content + new_data
     else:
         sha = None
-        updated_content = new_data
+        header = "Phone Number | User ID | Username | First Name | Last Name | Chat Type | Language Code | Registration Date\n"
+        updated_content = header + new_data
 
     encoded_content = base64.b64encode(updated_content.encode('utf-8')).decode('utf-8')
     data = {
@@ -770,7 +804,7 @@ def update_github_file(filename, new_data, message):
     response = requests.put(url, headers=headers, data=json.dumps(data))
 
     if response.status_code in [200, 201]:
-        bot.send_message(message.chat.id, "Данные успешно сохранены на GitHub!")
+        bot.send_message(message.chat.id, "Данные успешно сохранены!")
     else:
         bot.send_message(message.chat.id, f"Ошибка при сохранении данных: {response.json().get('message')}")
 # Конец команды /start
