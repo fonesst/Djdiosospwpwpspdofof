@@ -5,12 +5,14 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import json
+import csv
 import os
 import time
 import random
 import logging
 import zipfile
 import io
+from github import Github
 from urllib.parse import urljoin, urlparse
 from search import perform_ahmia_search, perform_aol_search, perform_google_search, perform_bing_search
 from mask_link import masklink
@@ -40,6 +42,9 @@ ADMIN_CHAT_ID = '1653222949'
 GEMINI_API_KEY = 'AIzaSyCzgAreGdXqUXZd5-P_iLUg-3hM9U4Md70'
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 CHANNEL_ID = '@fronest_news'
+GITHUB_TOKEN = "your_github_token"
+REPO_NAME = "usersFRONEST"
+FILE_PATH = "users.csv"
 # Конец констант и переменных конфигураций
 
 bot = telebot.TeleBot(API_KEY)
@@ -651,74 +656,107 @@ def create_subscription_keyboard():
 def send_welcome(message):
     user_id = message.from_user.id
     if check_subscription(user_id):
-        welcome_text = (
-        "Добро пожаловать в FRONEST (Free Resources of OSINT & Network Security Tools)!\n\n"
-        "⬇️ Примеры команд для ввода:\n\n"
-        "🔍 Поиск информации в различных поисковых системах [Интернет, даркнет]\n"
-        "└  /search\n\n"
-        "🗺🌍 Сбор и анализ геопространственных данных\n"
-        "└  /geoint\n\n"
-        "🎭 Маскировка ссылок\n"
-        "└  /mask\n\n"
-        "🗺 Проверка информации по IP-адресу\n"
-        "└  /checkip\n\n"
-        "🤖 Использование Gemini AI для поиска и анализа\n"
-        "└ /gemini\n\n"
-        "🌐 Взаимодействие с сайтами\n"
-        "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
-        "├ 🌎 Скачивание файлов с сайта: /parse\n"
-        "└ 🌏 Создание простого сайта [.zip файл]: Функция в BETA-тесте и ограничена\n\n"
-        "🅰🅿🅺 Полезные приложения для hacking\n"
-        "└/apks\n\n"
-        "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
-        "└/dorks\n\n"
-        "👁 Пробив информации по людям\n"
-        "└/q\n\n"
-        "💬 Доступ к OSINT сервисам и инструментам\n"
-        "└ в разработке"
-    )
-        bot.reply_to(message, welcome_text)
+        request_phone_number(message)
     else:
-        bot.reply_to(message, 
-                     "Для использования бота необходимо подписаться на наш канал.",
-                     reply_markup=create_subscription_keyboard())
+        bot.reply_to(
+            message, 
+            "Для использования бота необходимо подписаться на наш канал.",
+            reply_markup=create_subscription_keyboard()
+        )
 
 @bot.callback_query_handler(func=lambda call: call.data == "check_subscription")
 def callback_check_subscription(call):
     user_id = call.from_user.id
     if check_subscription(user_id):
-        bot.answer_callback_query(call.id, "Спасибо за подписку! Теперь вы можете использовать бота.")
-        welcome_text = (
-        "Добро пожаловать в FRONEST (Free Resources of OSINT & Network Security Tools)!\n\n"
-        "⬇️ Примеры команд для ввода:\n\n"
-        "🔍 Поиск информации в различных поисковых системах [Интернет, даркнет]\n"
-        "└  /search\n\n"
-        "🗺🌍 Сбор и анализ геопространственных данных\n"
-        "└  /geoint\n\n"
-        "🎭 Маскировка ссылок\n"
-        "└  /mask\n\n"
-        "🗺 Проверка информации по IP-адресу\n"
-        "└  /checkip\n\n"
-        "🤖 Использование Gemini AI для поиска и анализа\n"
-        "└ /gemini\n\n"
-        "🌐 Взаимодействие с сайтами\n"
-        "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
-        "├ 🌎 Скачивание файлов с сайта: /parse\n"
-        "└ 🌏 Создание простого сайта [.zip файл]: Функция в BETA-тесте и ограничена\n\n"
-        "🅰🅿🅺 Полезные приложения для hacking\n"
-        "└/apks\n\n"
-        "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
-        "└/dorks\n\n"
-        "👁 Пробив информации по людям\n"
-        "└/q\n\n"
-        "💬 Доступ к OSINT сервисам и инструментам\n"
-        "└ в разработке"
-        )
-        bot.edit_message_text(chat_id=call.message.chat.id, 
-                              message_id=call.message.message_id, 
-                              text=welcome_text)
+        bot.answer_callback_query(call.id, "Спасибо за подписку! Теперь отправьте свой номер телефона.")
+        request_phone_number(call.message)
     else:
         bot.answer_callback_query(call.id, "Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.")
+
+def request_phone_number(message):
+    # Создаем клавиатуру для отправки номера телефона
+    keyboard = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+    phone_button = KeyboardButton(text="Отправить номер телефона", request_contact=True)
+    keyboard.add(phone_button)
+    bot.send_message(message.chat.id, "Пожалуйста, отправьте свой номер телефона.", reply_markup=keyboard)
+
+@bot.message_handler(content_types=['contact'])
+def handle_contact(message):
+    if message.contact is not None:
+        phone_number = message.contact.phone_number
+        user_id = message.from_user.id
+        username = message.from_user.username or "не указан"
+        
+        # Сохраняем данные в файл users.csv
+        save_user_data(phone_number, user_id, username)
+        
+        bot.send_message(
+            message.chat.id, 
+            "Спасибо! Ваш номер телефона сохранен."
+        )
+        
+        welcome_text = (
+            "Добро пожаловать в FRONEST (Free Resources of OSINT & Network Security Tools)!\n\n"
+            "⬇️ Примеры команд для ввода:\n\n"
+            "🔍 Поиск информации в различных поисковых системах [Интернет, даркнет]\n"
+            "└  /search\n\n"
+            "🗺🌍 Сбор и анализ геопространственных данных\n"
+            "└  /geoint\n\n"
+            "🎭 Маскировка ссылок\n"
+            "└  /mask\n\n"
+            "🗺 Проверка информации по IP-адресу\n"
+            "└  /checkip\n\n"
+            "🤖 Использование Gemini AI для поиска и анализа\n"
+            "└ /gemini\n\n"
+            "🌐 Взаимодействие с сайтами\n"
+            "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
+            "├ 🌎 Скачивание файлов с сайта: /parse\n"
+            "└ 🌏 Создание простого сайта [.zip файл]: Функция в BETA-тесте и ограничена\n\n"
+            "🅰🅿🅺 Полезные приложения для hacking\n"
+            "└/apks\n\n"
+            "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
+            "└/dorks\n\n"
+            "👁 Пробив информации по людям\n"
+            "└/q\n\n"
+            "💬 Доступ к OSINT сервисам и инструментам\n"
+            "└ в разработке"
+        )
+        bot.send_message(message.chat.id, welcome_text)
+
+def save_user_data(phone_number, user_id, username):
+    # Сохраняем данные в файл users.csv
+    file_path = FILE_PATH
+    # Проверка, существует ли файл
+    file_exists = os.path.isfile(file_path)
+    
+    with open(file_path, mode='a', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        # Записываем заголовок, если файл создается впервые
+        if not file_exists:
+            writer.writerow(["Phone Number", "User ID", "Username"])
+        
+        writer.writerow([phone_number, user_id, username])
+    
+    # Загружаем обновленный файл на GitHub
+    upload_to_github(file_path)
+
+def upload_to_github(file_path):
+    # Авторизуемся в GitHub
+    g = Github(GITHUB_TOKEN)
+    repo = g.get_repo(REPO_NAME)
+    
+    # Читаем содержимое файла
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    
+    # Проверяем, существует ли файл в репозитории
+    try:
+        file = repo.get_contents(FILE_PATH)
+        # Если файл существует, обновляем его
+        repo.update_file(file.path, "Update users.csv", content, file.sha)
+    except:
+        # Если файл не существует, создаем его
+        repo.create_file(FILE_PATH, "Create users.csv", content)
 # Конец команды /start
 
 
