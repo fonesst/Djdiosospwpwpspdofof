@@ -1621,24 +1621,24 @@ def handle_q(message):
 
 # Начало обработчика id
 # Функция для создания инлайн-кнопок выбора направления
-
-# Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
-    keyboard = types.InlineKeyboardMarkup()
-    btn_telegram = types.InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
-    btn_vk = types.InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
-    btn_ok = types.InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
-    btn_instagram = types.InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
-    btn_facebook = types.InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
+    keyboard = InlineKeyboardMarkup()
+    btn_telegram = InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
+    btn_vk = InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
+    btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
+    btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
+    btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
+    check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
+    keyboard.add(check_db_btn)
     return keyboard
 
 # Обработчик сообщений, начинающихся с "id"
 @bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
 def handle_id_search(message):
-    id_value = message.text[2:].strip()  # Убираем "id" из начала строки
+    id_value = message.text[2:].strip()  # Убираем префикс 'id'
     bot.reply_to(
         message,
         f"🆔 id{id_value}\n└  Выберите направление поиска",
@@ -1705,8 +1705,8 @@ def handle_search_callback(call):
             report_text = f"Информация для id{id_value} не найдена."
 
         # Создаем инлайн кнопку "Проверить БД «глаз бога»"
-        keyboard = types.InlineKeyboardMarkup()
-        check_db_btn = types.InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+        keyboard = InlineKeyboardMarkup()
+        check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
         keyboard.add(check_db_btn)
         
         # Отправляем сообщение с отчетом и кнопкой
@@ -1747,14 +1747,11 @@ def handle_check_db_callback(call):
     id_value = call.data.split("_")[2]
     user_info = search_in_gb_files(id_value)
     
-    report_text = (
-        "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
-        "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
-        "База данных стала «утекшей» в июле 2021 года.\n\n"
-    )
-
     if user_info:
-        report_text += (
+        report_text = (
+            "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
+            "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
+            "База данных стала «утекшей» в июле 2021 года.\n\n"
             "📋 Отчёт содержит:\n"
             f"├📧 ID: {user_info['id']}\n"
             f"├📞 Телефон: {user_info['phone']}\n"
@@ -1763,26 +1760,17 @@ def handle_check_db_callback(call):
             f"└🏷 Фамилия: {user_info['last_name']}"
         )
     else:
-        report_text += f"Информация для id{id_value} не найдена в базе данных «Глаз Бога»."
-
-    # Добавляем кнопку "Проверить БД «глаз бога»" даже если информация не найдена
-    keyboard = types.InlineKeyboardMarkup()
-    check_db_btn = types.InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
-    keyboard.add(check_db_btn)
+        report_text = (
+            "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
+            "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
+            "База данных стала «утекшей» в июле 2021 года.\n\n"
+            f"Информация для id{id_value} не найдена в базе данных «Глаз Бога»."
+        )
     
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                          text=report_text, reply_markup=keyboard)
-
-# Обработчик для поиска id без префикса "id"
-@bot.message_handler(func=lambda message: message.text.isdigit())
-def handle_id_without_prefix(message):
-    id_value = message.text
-    bot.reply_to(
-        message,
-        f"🆔 id{id_value}\n└  Выберите направление поиска",
-        reply_markup=create_search_direction_keyboard(id_value)
-    )
+                          text=report_text)
 # Конец обработчика id
+
 
 
 
