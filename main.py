@@ -1638,8 +1638,7 @@ def handle_id_search(message):
     id_value = message.text[2:].strip()
     bot.reply_to(
         message,
-        f"🆔 id{id_value}
-└  Выберите направление поиска",
+        f"🆔 id{id_value}\n└  Выберите направление поиска",
         reply_markup=create_search_direction_keyboard(id_value)
     )
 
@@ -1688,27 +1687,16 @@ def handle_search_callback(call):
 
         if user_info:
             report_text = (
-                f"🔎 ОТЧЁТ ПО ЗАПРОСУ:
-"
-                f" └  Telegram: id{id_value}
-
-"
-                f"📋 Отчёт содержит:
-"
-                f"├📧 ID: {user_info['id']}
-"
-                f"├📞 Телефон: {user_info['phone']}
-"
-                f"├👤 Юзернейм: {user_info['username']}
-"
-                f"├ Имя: {user_info['first_name']}
-"
-                f"├ Фамилия: {user_info['last_name']}
-"
-                f"├ Тип чата: {user_info['chat_type']}
-"
-                f"├ Язык: {user_info['language']}
-"
+                f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
+                f" └  Telegram: id{id_value}\n\n"
+                f"📋 Отчёт содержит:\n"
+                f"├📧 ID: {user_info['id']}\n"
+                f"├📞 Телефон: {user_info['phone']}\n"
+                f"├👤 Юзернейм: {user_info['username']}\n"
+                f"├ Имя: {user_info['first_name']}\n"
+                f"├ Фамилия: {user_info['last_name']}\n"
+                f"├ Тип чата: {user_info['chat_type']}\n"
+                f"├ Язык: {user_info['language']}\n"
                 f"└ Дата добавления: {user_info['added_date']}"
             )
         else:
