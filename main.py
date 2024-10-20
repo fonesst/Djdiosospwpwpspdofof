@@ -1,18 +1,16 @@
 # Начало библиотекk
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import json
-import csv
 import os
 import time
 import random
 import logging
 import zipfile
 import io
-from github import Github
 from urllib.parse import urljoin, urlparse
 from search import perform_ahmia_search, perform_aol_search, perform_google_search, perform_bing_search
 from mask_link import masklink
@@ -27,7 +25,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from kadastr import parse_opendatabot_page, close_driver
-from selenium.webdriver.common.by import By 
+from selenium.webdriver.common.by import By
+import base64
+import json
 # Конец библиотек
 
 
@@ -42,9 +42,8 @@ ADMIN_CHAT_ID = '1653222949'
 GEMINI_API_KEY = 'AIzaSyCzgAreGdXqUXZd5-P_iLUg-3hM9U4Md70'
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 CHANNEL_ID = '@fronest_news'
-GITHUB_TOKEN = "your_github_token"
-REPO_NAME = "usersFRONEST"
-FILE_PATH = "users.csv"
+GITHUB_TOKEN = 'your_github_token'
+REPO = 'fonesst/usersFRONEST'  # Укажите репозиторий в формате 'пользователь/репозиторий'
 # Конец констант и переменных конфигураций
 
 bot = telebot.TeleBot(API_KEY)
@@ -652,11 +651,21 @@ def create_subscription_keyboard():
     keyboard.add(check_button)
     return keyboard
 
+def request_phone_keyboard():
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    phone_button = KeyboardButton(text="Отправить номер телефона", request_contact=True)
+    keyboard.add(phone_button)
+    return keyboard
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
     if check_subscription(user_id):
-        request_phone_number(message)
+        bot.send_message(
+            message.chat.id,
+            "Для завершения регистрации отправьте свой номер телефона:",
+            reply_markup=request_phone_keyboard()
+        )
     else:
         bot.reply_to(
             message, 
@@ -669,32 +678,25 @@ def callback_check_subscription(call):
     user_id = call.from_user.id
     if check_subscription(user_id):
         bot.answer_callback_query(call.id, "Спасибо за подписку! Теперь отправьте свой номер телефона.")
-        request_phone_number(call.message)
+        bot.send_message(
+            call.message.chat.id,
+            "Для завершения регистрации отправьте свой номер телефона:",
+            reply_markup=request_phone_keyboard()
+        )
     else:
         bot.answer_callback_query(call.id, "Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.")
-
-def request_phone_number(message):
-    # Создаем клавиатуру для отправки номера телефона
-    keyboard = ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    phone_button = KeyboardButton(text="Отправить номер телефона", request_contact=True)
-    keyboard.add(phone_button)
-    bot.send_message(message.chat.id, "Пожалуйста, отправьте свой номер телефона.", reply_markup=keyboard)
 
 @bot.message_handler(content_types=['contact'])
 def handle_contact(message):
     if message.contact is not None:
         phone_number = message.contact.phone_number
         user_id = message.from_user.id
-        username = message.from_user.username or "не указан"
-        
-        # Сохраняем данные в файл users.csv
-        save_user_data(phone_number, user_id, username)
-        
-        bot.send_message(
-            message.chat.id, 
-            "Спасибо! Ваш номер телефона сохранен."
-        )
-        
+        username = message.from_user.username or "Нет имени"
+
+        user_data = f"{phone_number} | {user_id} | {username}\n"
+        update_github_file('users.csv', user_data, message)
+
+        # Приветственное сообщение после отправки номера телефона
         welcome_text = (
             "Добро пожаловать в FRONEST (Free Resources of OSINT & Network Security Tools)!\n\n"
             "⬇️ Примеры команд для ввода:\n\n"
@@ -723,40 +725,36 @@ def handle_contact(message):
         )
         bot.send_message(message.chat.id, welcome_text)
 
-def save_user_data(phone_number, user_id, username):
-    # Сохраняем данные в файл users.csv
-    file_path = FILE_PATH
-    # Проверка, существует ли файл
-    file_exists = os.path.isfile(file_path)
-    
-    with open(file_path, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        # Записываем заголовок, если файл создается впервые
-        if not file_exists:
-            writer.writerow(["Phone Number", "User ID", "Username"])
-        
-        writer.writerow([phone_number, user_id, username])
-    
-    # Загружаем обновленный файл на GitHub
-    upload_to_github(file_path)
+def update_github_file(filename, new_data, message):
+    url = f"https://api.github.com/repos/{REPO}/contents/{filename}"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Content-Type": "application/json"
+    }
 
-def upload_to_github(file_path):
-    # Авторизуемся в GitHub
-    g = Github(GITHUB_TOKEN)
-    repo = g.get_repo(REPO_NAME)
-    
-    # Читаем содержимое файла
-    with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
-    
-    # Проверяем, существует ли файл в репозитории
-    try:
-        file = repo.get_contents(FILE_PATH)
-        # Если файл существует, обновляем его
-        repo.update_file(file.path, "Update users.csv", content, file.sha)
-    except:
-        # Если файл не существует, создаем его
-        repo.create_file(FILE_PATH, "Create users.csv", content)
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        file_data = response.json()
+        sha = file_data['sha']
+        content = base64.b64decode(file_data['content']).decode('utf-8')
+        updated_content = content + new_data
+    else:
+        sha = None
+        updated_content = new_data
+
+    encoded_content = base64.b64encode(updated_content.encode('utf-8')).decode('utf-8')
+    data = {
+        "message": "Обновлен файл users.csv",
+        "content": encoded_content,
+        "sha": sha
+    }
+
+    response = requests.put(url, headers=headers, data=json.dumps(data))
+
+    if response.status_code == 200 or response.status_code == 201:
+        bot.send_message(message.chat.id, "Данные успешно сохранены на GitHub!")
+    else:
+        bot.send_message(message.chat.id, f"Ошибка при сохранении данных: {response.json().get('message')}")
 # Конец команды /start
 
 
