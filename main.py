@@ -1568,7 +1568,7 @@ def handle_q(message):
                      
 # Новый обработчик с id
 def get_users_file():
-    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.txt"
+    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.csv"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Content-Type": "application/json"
@@ -1579,18 +1579,20 @@ def get_users_file():
         decoded_content = base64.b64decode(content).decode('utf-8')
         return decoded_content.splitlines()
     else:
-        print(f"Ошибка при получении файла users.txt: {response.json().get('message')}")
+        print(f"Ошибка при получении файла users.csv: {response.json().get('message')}")
         return None
 
-# Функция для поиска номера телефона по user_id в файле users.txt
+# Функция для поиска номера телефона по user_id в файле users.csv
 def find_phone_number(user_id):
     users_data = get_users_file()
     if users_data:
         for line in users_data:
             parts = line.split('|')
             if len(parts) >= 2 and parts[1].strip() == str(user_id):
-                return parts[0].strip()  # Возвращаем номер телефона
-    return "Телефон не найден"
+                phone_number = parts[0].strip()
+                username = parts[2].strip() if len(parts) > 2 else "Нет данных"
+                return phone_number, username
+    return "Телефон не найден", "Нет данных"
 
 # Обработчик нажатий на кнопки с выбором платформы
 @bot.callback_query_handler(func=lambda call: call.data.startswith("search_"))
@@ -1600,14 +1602,15 @@ def handle_search_callback(call):
     
     # Пример отчета для Telegram
     if direction == "telegram":
-        phone_number = find_phone_number(id_value)
+        phone_number, username = find_phone_number(id_value)
 
         report_text = (
             f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
             f" └  Telegram: id{id_value}\n\n"
             f"📋 Отчёт содержит:\n"
             f"├📧 ID: {id_value}\n"
-            f"├📞 Телефон(ы): {phone_number}"
+            f"├📞 Телефон(ы): {phone_number}\n"
+            f"├👤 Юзер: {username}"
         )
         bot.send_message(call.message.chat.id, report_text)
     else:
