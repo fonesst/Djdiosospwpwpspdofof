@@ -1638,7 +1638,8 @@ def handle_id_search(message):
     id_value = message.text[2:].strip()
     bot.reply_to(
         message,
-        f"🆔 id{id_value}\n└  Выберите направление поиска",
+        f"🆔 id{id_value}
+└  Выберите направление поиска",
         reply_markup=create_search_direction_keyboard(id_value)
     )
 
@@ -1658,36 +1659,61 @@ def get_users_file():
         print(f"Ошибка при получении файла users.csv: {response.json().get('message')}")
         return None
 
-# Функция для поиска номера телефона по user_id в файле users.csv
-def find_phone_number(user_id):
+# Функция для поиска информации о пользователе по user_id в файле users.csv
+def find_user_info(user_id):
     users_data = get_users_file()
     if users_data:
         for line in users_data:
             parts = line.split('|')
-            if len(parts) >= 2 and parts[1].strip() == str(user_id):
-                phone_number = parts[0].strip()
-                username = parts[2].strip() if len(parts) > 2 else "Нет данных"
-                return phone_number, username
-    return "Телефон не найден", "Нет данных"
+            if len(parts) >= 8 and parts[1].strip() == str(user_id):
+                return {
+                    "phone": parts[0].strip(),
+                    "id": parts[1].strip(),
+                    "username": parts[2].strip(),
+                    "first_name": parts[3].strip(),
+                    "last_name": parts[4].strip(),
+                    "chat_type": parts[5].strip(),
+                    "language": parts[6].strip(),
+                    "added_date": parts[7].strip()
+                }
+    return None
 
 # Обработчик нажатий на кнопки с выбором платформы
 @bot.callback_query_handler(func=lambda call: call.data.startswith("search_"))
 def handle_search_callback(call):
-    user_id = call.from_user.id
     direction, id_value = call.data.split("_")[1], call.data.split("_")[2]
     
-    # Пример отчета для Telegram
     if direction == "telegram":
-        phone_number, username = find_phone_number(id_value)
+        user_info = find_user_info(id_value)
 
-        report_text = (
-            f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
-            f" └  Telegram: id{id_value}\n\n"
-            f"📋 Отчёт содержит:\n"
-            f"├📧 ID: {id_value}\n"
-            f"├📞 Телефон(ы): {phone_number}\n"
-            f"├👤 Юзер: {username}"
-        )
+        if user_info:
+            report_text = (
+                f"🔎 ОТЧЁТ ПО ЗАПРОСУ:
+"
+                f" └  Telegram: id{id_value}
+
+"
+                f"📋 Отчёт содержит:
+"
+                f"├📧 ID: {user_info['id']}
+"
+                f"├📞 Телефон: {user_info['phone']}
+"
+                f"├👤 Юзернейм: {user_info['username']}
+"
+                f"├ Имя: {user_info['first_name']}
+"
+                f"├ Фамилия: {user_info['last_name']}
+"
+                f"├ Тип чата: {user_info['chat_type']}
+"
+                f"├ Язык: {user_info['language']}
+"
+                f"└ Дата добавления: {user_info['added_date']}"
+            )
+        else:
+            report_text = f"Информация для id{id_value} не найдена."
+        
         bot.send_message(call.message.chat.id, report_text)
     else:
         bot.send_message(call.message.chat.id, f"Функция для поиска по {direction} пока не реализована.")
