@@ -1623,24 +1623,24 @@ def handle_q(message):
 # Начало обработчика id
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
-    keyboard = InlineKeyboardMarkup()
-    btn_telegram = InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
-    btn_vk = InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
-    btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
-    btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
-    btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
+    keyboard = types.InlineKeyboardMarkup()
+    btn_telegram = types.InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
+    btn_vk = types.InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
+    btn_ok = types.InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
+    btn_instagram = types.InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
+    btn_facebook = types.InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
     return keyboard
 
-# Обработчик сообщений, начинающихся с "id"
-@bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
+# Обработчик сообщений, содержащих только цифры
+@bot.message_handler(func=lambda message: message.text.strip().isdigit())
 def handle_id_search(message):
-    id_value = message.text[2:].strip()
+    id_value = message.text.strip()
     bot.reply_to(
         message,
-        f"🆔 id{id_value}\n└  Выберите направление поиска",
+        f"🆔 {id_value}\n└  Выберите направление поиска",
         reply_markup=create_search_direction_keyboard(id_value)
     )
 
@@ -1660,7 +1660,7 @@ def get_users_file():
         print(f"Ошибка при получении файла users.csv: {response.json().get('message')}")
         return None
 
-# Функция для поиска информации о пользователе по user_id в файле users.csv
+# Функция для поиска информации о пользователе по user_id в users.csv
 def find_user_info(user_id):
     users_data = get_users_file()
     if users_data:
@@ -1679,6 +1679,31 @@ def find_user_info(user_id):
                 }
     return None
 
+# Функция для поиска в файлах gb0.csv и gb1.csv
+def search_in_gb_files(user_id):
+    files_to_check = ['gb0.csv', 'gb1.csv']
+    for file_name in files_to_check:
+        url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
+        headers = {
+            "Authorization": f"token {GITHUB_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            content = response.json()['content']
+            decoded_content = base64.b64decode(content).decode('utf-8')
+            for line in decoded_content.splitlines():
+                parts = line.split(',')
+                if len(parts) >= 5 and parts[0].strip() == str(user_id):
+                    return {
+                        "id": parts[0].strip(),
+                        "phone": parts[1].strip(),
+                        "username": parts[2].strip(),
+                        "first_name": parts[3].strip(),
+                        "last_name": parts[4].strip()
+                    }
+    return None
+
 # Обработчик нажатий на кнопки с выбором платформы
 @bot.callback_query_handler(func=lambda call: call.data.startswith("search_"))
 def handle_search_callback(call):
@@ -1690,7 +1715,7 @@ def handle_search_callback(call):
         if user_info:
             report_text = (
                 f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
-                f" └  Telegram: id{id_value}\n\n"
+                f" └  Telegram: {id_value}\n\n"
                 f"📋 Отчёт содержит:\n"
                 f"├📧 ID: {user_info['id']}\n"
                 f"├📞 Телефон: {user_info['phone']}\n"
@@ -1702,8 +1727,8 @@ def handle_search_callback(call):
             )
             
             # Создаем инлайн кнопку "Проверить БД «глаз бога»"
-            keyboard = InlineKeyboardMarkup()
-            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+            keyboard = types.InlineKeyboardMarkup()
+            check_db_btn = types.InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
             keyboard.add(check_db_btn)
             
             # Отправляем сообщение с отчетом и кнопкой
@@ -1711,44 +1736,21 @@ def handle_search_callback(call):
                                   text=report_text, reply_markup=keyboard)
         else:
             # Добавляем кнопку для поиска в "глазе бога" даже если информация не найдена
-            keyboard = InlineKeyboardMarkup()
-            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+            keyboard = types.InlineKeyboardMarkup()
+            check_db_btn = types.InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
             keyboard.add(check_db_btn)
 
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                                  text=f"Информация для id{id_value} не найдена.", reply_markup=keyboard)
+                                  text=f"Информация для {id_value} не найдена.", reply_markup=keyboard)
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
-
-# Функция для поиска в файле gb0.csv
-def search_in_gb_file(user_id):
-    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/gb0.csv"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        content = response.json()['content']
-        decoded_content = base64.b64decode(content).decode('utf-8')
-        for line in decoded_content.splitlines():
-            parts = line.split(',')
-            if len(parts) >= 5 and parts[0].strip() == str(user_id):
-                return {
-                    "id": parts[0].strip(),
-                    "phone": parts[1].strip(),
-                    "username": parts[2].strip(),
-                    "first_name": parts[3].strip(),
-                    "last_name": parts[4].strip()
-                }
-    return None
 
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
     id_value = call.data.split("_")[2]
-    user_info = search_in_gb_file(id_value)
+    user_info = search_in_gb_files(id_value)
     
     if user_info:
         report_text = (
@@ -1767,11 +1769,12 @@ def handle_check_db_callback(call):
             "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
             "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
             "База данных стала «утекшей» в июле 2021 года.\n\n"
-            f"Информация для id{id_value} не найдена в базе данных «Глаз Бога»."
+            f"Информация для {id_value} не найдена в базе данных «Глаз Бога»."
         )
     
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                           text=report_text)
+
 # Конец обработчика id
 
 
