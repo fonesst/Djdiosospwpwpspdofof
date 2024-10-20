@@ -596,7 +596,9 @@ https://telegra.ph/Prodolzhenie-soobshcheniya-10-10
 },
 'services': {
             'text': """
-Test
+Сайты / сервисы, которые могут вам пригодится в будещем:
+
+https://telegra.ph/Servisy-FRONEST-10-20
 """,
             'prev': 'vpntoproxy',
             'next': 'osint_services'
