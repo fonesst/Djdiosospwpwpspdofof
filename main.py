@@ -1567,8 +1567,32 @@ def handle_q(message):
 
                      
 # Новый обработчик с id
+# Функция для создания инлайн-кнопок выбора направления
+def create_search_direction_keyboard(id_value):
+    keyboard = InlineKeyboardMarkup()
+    btn_telegram = InlineKeyboardButton(text="Telegram", callback_data=f"search_telegram_{id_value}")
+    btn_vk = InlineKeyboardButton(text="Вконтакте", callback_data=f"search_vk_{id_value}")
+    btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
+    btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
+    btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
+    keyboard.row(btn_telegram)
+    keyboard.row(btn_vk, btn_ok)
+    keyboard.row(btn_instagram, btn_facebook)
+    return keyboard
+
+# Обработчик сообщений, начинающихся с "id"
+@bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
+def handle_id_search(message):
+    id_value = message.text[2:].strip()
+    bot.reply_to(
+        message,
+        f"🆔 id{id_value}\n└  Выберите направление поиска",
+        reply_markup=create_search_direction_keyboard(id_value)
+    )
+
+# Функция для получения содержимого файла users.csv с GitHub
 def get_users_file():
-    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.csv"
+    url = f"https://api.github.com/repos/название_аккаунта/usersFRONEST/contents/users.csv"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Content-Type": "application/json"
