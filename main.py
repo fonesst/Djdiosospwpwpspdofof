@@ -1627,24 +1627,89 @@ def create_search_direction_keyboard(id_value):
     btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
     btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
     btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
+    btn_check_gb = InlineKeyboardButton(text="Проверить БД «глаз бога»", callback_data=f"check_gb_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
+    keyboard.add(btn_check_gb)
     return keyboard
 
-# Обработчик сообщений, начинающихся с "id"
-@bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
-def handle_id_search(message):
-    id_value = message.text[2:].strip()
-    bot.reply_to(
-        message,
-        f"🆔 id{id_value}\n└  Выберите направление поиска",
-        reply_markup=create_search_direction_keyboard(id_value)
-    )
+# Обработчик нажатий на кнопки с выбором платформы
+@bot.callback_query_handler(func=lambda call: call.data.startswith("search_") or call.data.startswith("check_gb_"))
+def handle_search_callback(call):
+    action, id_value = call.data.split("_", 1)
+    
+    if action == "search":
+        # Поиск по платформам, как и ранее
+        direction, id_value = id_value.split("_", 1)
+        
+        if direction == "telegram":
+            user_info = find_user_info(id_value)
 
-# Функция для получения содержимого файла users.csv с GitHub
-def get_users_file():
-    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.csv"
+            if user_info:
+                report_text = (
+                    f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
+                    f" └  Telegram: id{id_value}\n\n"
+                    f"📋 Отчёт содержит:\n"
+                    f"├📧 ID: {user_info['id']}\n"
+                    f"├📞 Телефон: {user_info['phone']}\n"
+                    f"├👤 Юзернейм: {user_info['username']}\n"
+                    f"├🏷 Имя Фамилия: {user_info['first_name']} {user_info['last_name']}\n"
+                    f"├💬 Тип чата: {user_info['chat_type']}\n"
+                    f"├🌎 Язык устройства: {user_info['language']}\n"
+                    f"└📆 Дата добавления: {user_info['added_date']}"
+                )
+                # Добавляем кнопку для проверки БД «глаз бога»
+                keyboard = InlineKeyboardMarkup()
+                keyboard.add(InlineKeyboardButton(text="Проверить БД «глаз бога»", callback_data=f"check_gb_{id_value}"))
+                bot.send_message(call.message.chat.id, report_text, reply_markup=keyboard)
+            else:
+                bot.send_message(call.message.chat.id, f"Информация для id{id_value} не найдена.")
+        
+        else:
+            bot.send_message(call.message.chat.id, f"Функция для поиска по {direction} пока не реализована.")
+    
+    elif action == "check_gb":
+        # Выполняем поиск по файлам gb0.csv и gb1.csv
+        gb_info = search_gb_databases(id_value)
+        
+        # Формируем сообщение с результатами поиска
+        gb_report_text = (
+            "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
+            "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. База даных стала «утекшей» в июле 2021 года.\n\n"
+            "📋 Отчёт содержит:\n"
+            f"├📧 ID: {gb_info.get('id', '')}\n"
+            f"├📞 Телефон: {gb_info.get('phone', '')}\n"
+            f"├👤 Юзернейм: {gb_info.get('username', '')}\n"
+            f"├🏷 Имя: {gb_info.get('first_name', '')}\n"
+            f"└🏷 Фамилия: {gb_info.get('last_name', '')}"
+        )
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=gb_report_text)
+
+# Функция для поиска информации в базе данных «глаз бога»
+def search_gb_databases(id_value):
+    files = ["gb0.csv", "gb1.csv"]
+    gb_info = {}
+
+    for file in files:
+        content = get_file_from_github(file)
+        if content:
+            for line in content:
+                parts = line.split(',')
+                if len(parts) >= 5 and parts[0].strip() == id_value:
+                    gb_info = {
+                        "id": parts[0].strip(),
+                        "phone": parts[1].strip(),
+                        "username": parts[2].strip(),
+                        "first_name": parts[3].strip(),
+                        "last_name": parts[4].strip()
+                    }
+                    return gb_info
+    return gb_info
+
+# Функция для получения содержимого файла с GitHub
+def get_file_from_github(filename):
+    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{filename}"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Content-Type": "application/json"
@@ -1655,55 +1720,8 @@ def get_users_file():
         decoded_content = base64.b64decode(content).decode('utf-8')
         return decoded_content.splitlines()
     else:
-        print(f"Ошибка при получении файла users.csv: {response.json().get('message')}")
+        print(f"Ошибка при получении файла {filename}: {response.json().get('message')}")
         return None
-
-# Функция для поиска информации о пользователе по user_id в файле users.csv
-def find_user_info(user_id):
-    users_data = get_users_file()
-    if users_data:
-        for line in users_data:
-            parts = line.split('|')
-            if len(parts) >= 8 and parts[1].strip() == str(user_id):
-                return {
-                    "phone": parts[0].strip(),
-                    "id": parts[1].strip(),
-                    "username": parts[2].strip(),
-                    "first_name": parts[3].strip(),
-                    "last_name": parts[4].strip(),
-                    "chat_type": parts[5].strip(),
-                    "language": parts[6].strip(),
-                    "added_date": parts[7].strip()
-                }
-    return None
-
-# Обработчик нажатий на кнопки с выбором платформы
-@bot.callback_query_handler(func=lambda call: call.data.startswith("search_"))
-def handle_search_callback(call):
-    direction, id_value = call.data.split("_")[1], call.data.split("_")[2]
-    
-    if direction == "telegram":
-        user_info = find_user_info(id_value)
-
-        if user_info:
-            report_text = (
-                f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
-                f" └  Telegram: id{id_value}\n\n"
-                f"📋 Отчёт содержит:\n"
-                f"├📧 ID: {user_info['id']}\n"
-                f"├📞 Телефон: {user_info['phone']}\n"
-                f"├👤 Юзернейм: {user_info['username']}\n"
-                f"├🏷 Имя Фамилия: {user_info['first_name']} {user_info['last_name']}\n"
-                f"├💬 Тип чата: {user_info['chat_type']}\n"
-                f"├🌎 Язык устройства: {user_info['language']}\n"
-                f"└📆 Дата добавления: {user_info['added_date']}"
-            )
-        else:
-            report_text = f"Информация для id{id_value} не найдена."
-        
-        bot.send_message(call.message.chat.id, report_text)
-    else:
-        bot.send_message(call.message.chat.id, f"Функция для поиска по {direction} пока не реализована.")
 # Конец id
 
 
