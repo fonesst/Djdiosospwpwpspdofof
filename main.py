@@ -1628,39 +1628,24 @@ def create_search_direction_keyboard(id_value):
     btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
     btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
     btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
-    check_db_btn = InlineKeyboardButton(text="Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+    # Добавляем кнопку "Проверить БД «глаз бога»"
+    btn_check_db = InlineKeyboardButton(text="Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
-    keyboard.row(check_db_btn)
+    keyboard.row(btn_check_db)
     return keyboard
 
 # Обработчик сообщений, начинающихся с "id"
 @bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
 def handle_id_search(message):
-    # Убираем префикс "id" и пробелы
+    # Извлекаем id без префикса "id"
     id_value = message.text[2:].strip()
     bot.reply_to(
         message,
         f"🆔 id{id_value}\n└  Выберите направление поиска",
         reply_markup=create_search_direction_keyboard(id_value)
     )
-
-# Функция для получения содержимого файла users.csv с GitHub
-def get_users_file():
-    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/users.csv"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        content = response.json()['content']
-        decoded_content = base64.b64decode(content).decode('utf-8')
-        return decoded_content.splitlines()
-    else:
-        print(f"Ошибка при получении файла users.csv: {response.json().get('message')}")
-        return None
 
 # Функция для поиска информации о пользователе по user_id в файле users.csv
 def find_user_info(user_id):
@@ -1702,23 +1687,17 @@ def handle_search_callback(call):
                 f"├🌎 Язык устройства: {user_info['language']}\n"
                 f"└📆 Дата добавления: {user_info['added_date']}"
             )
-            
-            # Создаем инлайн кнопку "Проверить БД «глаз бога»"
-            keyboard = InlineKeyboardMarkup()
-            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
-            keyboard.add(check_db_btn)
-            
-            # Отправляем сообщение с отчетом и кнопкой
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                                  text=report_text, reply_markup=keyboard)
         else:
-            # Информация не найдена, но добавляем кнопку "Проверить БД «глаз бога»"
-            keyboard = InlineKeyboardMarkup()
-            check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
-            keyboard.add(check_db_btn)
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                                  text=f"Информация для id{id_value} не найдена.",
-                                  reply_markup=keyboard)
+            report_text = f"Информация для id{id_value} не найдена."
+
+        # Создаем инлайн кнопку "Проверить БД «глаз бога»"
+        keyboard = InlineKeyboardMarkup()
+        check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
+        keyboard.add(check_db_btn)
+        
+        # Отправляем сообщение с отчетом и кнопкой
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
+                              text=report_text, reply_markup=keyboard)
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
@@ -1751,7 +1730,7 @@ def search_in_gb_files(user_id):
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
-    id_value = call.data.split("_")[2]  # Извлекаем чистое значение ID без префикса "id"
+    id_value = call.data.split("_")[2]
     user_info = search_in_gb_files(id_value)
     
     if user_info:
