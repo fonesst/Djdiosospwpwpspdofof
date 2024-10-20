@@ -42,7 +42,7 @@ ADMIN_CHAT_ID = '1653222949'
 GEMINI_API_KEY = 'AIzaSyCzgAreGdXqUXZd5-P_iLUg-3hM9U4Md70'
 GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 CHANNEL_ID = '@fronest_news'
-GITHUB_TOKEN = 'GITHUB_TOKEN'
+GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN'
 REPO = 'fonesst/usersFRONEST'  # Укажите репозиторий в формате 'пользователь/репозиторий'
 # Конец констант и переменных конфигураций
 
