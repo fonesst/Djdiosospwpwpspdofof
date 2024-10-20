@@ -1619,6 +1619,7 @@ def handle_q(message):
 
 
 
+
 # Начало обработчика id
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
@@ -1628,43 +1629,20 @@ def create_search_direction_keyboard(id_value):
     btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
     btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
     btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
-    # Добавляем кнопку "Проверить БД «глаз бога»"
-    btn_check_db = InlineKeyboardButton(text="Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
-    keyboard.row(btn_check_db)
     return keyboard
 
 # Обработчик сообщений, начинающихся с "id"
 @bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
 def handle_id_search(message):
-    # Извлекаем id без префикса "id"
-    id_value = message.text[2:].strip()
+    id_value = message.text[2:].strip()  # Убираем "id" и пробелы
     bot.reply_to(
         message,
         f"🆔 id{id_value}\n└  Выберите направление поиска",
         reply_markup=create_search_direction_keyboard(id_value)
     )
-
-# Функция для поиска информации о пользователе по user_id в файле users.csv
-def find_user_info(user_id):
-    users_data = get_users_file()
-    if users_data:
-        for line in users_data:
-            parts = line.split('|')
-            if len(parts) >= 8 and parts[1].strip() == str(user_id):
-                return {
-                    "phone": parts[0].strip(),
-                    "id": parts[1].strip(),
-                    "username": parts[2].strip(),
-                    "first_name": parts[3].strip(),
-                    "last_name": parts[4].strip(),
-                    "chat_type": parts[5].strip(),
-                    "language": parts[6].strip(),
-                    "added_date": parts[7].strip()
-                }
-    return None
 
 # Обработчик нажатий на кнопки с выбором платформы
 @bot.callback_query_handler(func=lambda call: call.data.startswith("search_"))
@@ -1694,7 +1672,7 @@ def handle_search_callback(call):
         keyboard = InlineKeyboardMarkup()
         check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
         keyboard.add(check_db_btn)
-        
+
         # Отправляем сообщение с отчетом и кнопкой
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=report_text, reply_markup=keyboard)
@@ -1702,36 +1680,32 @@ def handle_search_callback(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
 
-# Функция для поиска в файлах gb0.csv и gb1.csv
-def search_in_gb_files(user_id):
-    files_to_check = ['gb0.csv', 'gb1.csv']
-    for file_name in files_to_check:
-        url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            content = response.json()['content']
-            decoded_content = base64.b64decode(content).decode('utf-8')
-            for line in decoded_content.splitlines():
-                parts = line.split(',')
-                if len(parts) >= 5 and parts[0].strip() == str(user_id):
-                    return {
-                        "id": parts[0].strip(),
-                        "phone": parts[1].strip(),
-                        "username": parts[2].strip(),
-                        "first_name": parts[3].strip(),
-                        "last_name": parts[4].strip()
-                    }
+# Функция для поиска информации о пользователе по user_id в файле users.csv
+def find_user_info(user_id):
+    users_data = get_users_file()
+    if users_data:
+        # Здесь мы ищем пользователя без "id"
+        user_id_numeric = user_id.lstrip("id")  # Убираем "id", если он есть
+        for line in users_data:
+            parts = line.split('|')
+            if len(parts) >= 8 and parts[1].strip() == str(user_id_numeric):
+                return {
+                    "phone": parts[0].strip(),
+                    "id": parts[1].strip(),
+                    "username": parts[2].strip(),
+                    "first_name": parts[3].strip(),
+                    "last_name": parts[4].strip(),
+                    "chat_type": parts[5].strip(),
+                    "language": parts[6].strip(),
+                    "added_date": parts[7].strip()
+                }
     return None
 
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
     id_value = call.data.split("_")[2]
-    user_info = search_in_gb_files(id_value)
+    user_info = search_in_gb_files(id_value.lstrip("id"))  # Ищем без "id"
     
     if user_info:
         report_text = (
@@ -1755,7 +1729,10 @@ def handle_check_db_callback(call):
     
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                           text=report_text)
+
 # Конец обработчика id
+
+
 
 
 
