@@ -1634,13 +1634,13 @@ def create_search_direction_keyboard(id_value):
     keyboard.row(btn_instagram, btn_facebook)
     return keyboard
 
-# Обработчик сообщений, начинающихся с числа
-@bot.message_handler(func=lambda message: message.text.strip().isdigit())
+# Обработчик сообщений, начинающихся с "id"
+@bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
 def handle_id_search(message):
-    id_value = message.text.strip()
+    id_value = message.text[2:].strip()
     bot.reply_to(
         message,
-        f"🆔 {id_value}\n└  Выберите направление поиска",
+        f"🆔 id{id_value}\n└  Выберите направление поиска",
         reply_markup=create_search_direction_keyboard(id_value)
     )
 
@@ -1690,7 +1690,7 @@ def handle_search_callback(call):
         if user_info:
             report_text = (
                 f"🔎 ОТЧЁТ ПО ЗАПРОСУ:\n"
-                f" └  Telegram: {id_value}\n\n"
+                f" └  Telegram: id{id_value}\n\n"
                 f"📋 Отчёт содержит:\n"
                 f"├📧 ID: {user_info['id']}\n"
                 f"├📞 Телефон: {user_info['phone']}\n"
@@ -1716,12 +1716,12 @@ def handle_search_callback(call):
             keyboard.add(check_db_btn)
 
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                                  text=f"Информация для {id_value} не найдена.", reply_markup=keyboard)
+                                  text=f"Информация для id{id_value} не найдена.", reply_markup=keyboard)
     else:
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
 
-# Функция для поиска в файлах gb0.csv и gb1.csv
+# Функция для поиска в файлах gb0.csv и gb1.csv (по цифрам)
 def search_in_gb_files(user_id):
     files_to_check = ['gb0.csv', 'gb1.csv']
     for file_name in files_to_check:
@@ -1736,7 +1736,7 @@ def search_in_gb_files(user_id):
             decoded_content = base64.b64decode(content).decode('utf-8')
             for line in decoded_content.splitlines():
                 parts = line.split(',')
-                if len(parts) >= 5 and parts[0].strip() == str(user_id):
+                if len(parts) >= 5 and parts[0].strip() == user_id:
                     return {
                         "id": parts[0].strip(),
                         "phone": parts[1].strip(),
@@ -1774,8 +1774,9 @@ def handle_check_db_callback(call):
     
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                           text=report_text)
-
 # Конец обработчика id
+
+
 
 
 
