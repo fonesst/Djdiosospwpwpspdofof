@@ -636,119 +636,23 @@ https://telegra.ph/Servisy-FRONEST-10-20
 
 
 # Функция приветствия /start
-# Функция проверки пользователя в CSV
-def is_user_in_csv(user_id):
-    # Логика проверки пользователя в файле users.csv
-    pass
-
-# Функция проверки подписки
-def check_subscription(user_id):
-    # Логика проверки подписки на канал
-    pass
-
-# Клавиатура для запроса номера телефона
-def request_phone_keyboard():
-    keyboard = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-    button = telebot.types.KeyboardButton("Отправить номер телефона", request_contact=True)
-    keyboard.add(button)
-    return keyboard
-
-# Клавиатура для подписки на канал
-def create_subscription_keyboard():
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    button = telebot.types.InlineKeyboardButton("Я подписался", callback_data="check_subscription")
-    keyboard.add(button)
-    return keyboard
-
-# Функция приветствия /start
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    user_id = message.from_user.id
-
-    # Проверка наличия пользователя в users.csv
-    if is_user_in_csv(user_id):
-        welcome_text = (
-            "Добро пожаловать в FRONEST (Free Resources of OSINT & Network Security Tools)!\n\n"
-            "⬇️ Примеры команд для ввода:\n\n"
-            "🔍 Поиск информации в различных поисковых системах [Интернет, даркнет]\n"
-            "└  /search\n\n"
-            "🗺🌍 Сбор и анализ геопространственных данных\n"
-            "└  /geoint\n\n"
-            "🎭 Маскировка ссылок\n"
-            "└  /mask\n\n"
-            "🗺 Проверка информации по IP-адресу\n"
-            "└  /checkip\n\n"
-            "🤖 Использование Gemini AI для поиска и анализа\n"
-            "└ /gemini\n\n"
-            "🌐 Взаимодействие с сайтами\n"
-            "├ 🌍 Открытие сайта и извлечение информации: /opensite\n"
-            "├ 🌎 Скачивание файлов с сайта: /parse\n"
-            "└ 🌏 Создание простого сайта [.zip файл]: Функция в BETA-тесте и ограничена\n\n"
-            "🅰🅿🅺 Полезные приложения для hacking\n"
-            "└/apks\n\n"
-            "🕵️‍♂️📡 Доркинг поиск по файлам в интернете\n"
-            "└/dorks\n\n"
-            "👁 Пробив информации по людям\n"
-            "└/q\n\n"
-            "💬 Доступ к OSINT сервисам и инструментам\n"
-            "└ в разработке"
-        )
-        bot.send_message(message.chat.id, welcome_text)
-    else:
-        # Проверка подписки на канал
-        if check_subscription(user_id):
-            bot.send_message(
-                message.chat.id,
-                "Для завершения регистрации отправьте свой номер телефона. Ваши данные останутся конфиденциальными и не будут переданы третьим лицам:",
-                reply_markup=request_phone_keyboard()
-            )
-        else:
-            bot.reply_to(
-                message,
-                "Для использования бота необходимо подписаться на наш канал.",
-                reply_markup=create_subscription_keyboard()
-            )
-
-# Обработка нажатия кнопки "Я подписался"
-@bot.callback_query_handler(func=lambda call: call.data == "check_subscription")
-def callback_check_subscription(call):
-    user_id = call.from_user.id
-    if check_subscription(user_id):
-        bot.answer_callback_query(call.id, "Спасибо за подписку! Теперь отправьте свой номер телефона.")
-        bot.send_message(
-            call.message.chat.id,
-            "Для завершения регистрации отправьте свой номер телефона. Ваши данные останутся конфиденциальными и не будут переданы третьим лицам:",
-            reply_markup=request_phone_keyboard()
-        )
-    else:
-        bot.answer_callback_query(call.id, "Вы еще не подписались на канал. Пожалуйста, подпишитесь и попробуйте снова.")
-
 # Обработка контакта (номера телефона)
 @bot.message_handler(content_types=['contact'])
 def handle_contact(message):
     if message.contact is not None:
         phone_number = message.contact.phone_number
         user_id = message.from_user.id
-        username = f"@{message.from_user.username}" if message.from_user.username else "Нет имени"
-
-        # Получаем дополнительные данные
+        username = message.from_user.username or "Нет_имени"
+        username = f"@{username}" if username != "Нет_имени" else username
         chat_type = message.chat.type
-        language_code = message.from_user.language_code
-        first_name = message.from_user.first_name
-        last_name = message.from_user.last_name
+        language_code = message.from_user.language_code or "Неизвестно"
+        first_name = message.from_user.first_name or "Неизвестно"
+        last_name = message.from_user.last_name or "Неизвестно"
 
-        # Сбор данных для записи
-        user_data = (
-            f"Номер телефона: {phone_number} | "
-            f"ID пользователя: {user_id} | "
-            f"Имя: {first_name} | "
-            f"Фамилия: {last_name} | "
-            f"Username: {username} | "
-            f"Тип чата: {chat_type} | "
-            f"Языковой код: {language_code}\n"
-        )
+        # Получаем текущее время для отметки активности
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Обновляем файл на GitHub
+        user_data = f"{phone_number} | {user_id} | {username} | {chat_type} | {language_code} | {first_name} | {last_name} | Последняя активность: {current_time}\n"
         update_github_file('users.csv', user_data, message)
 
         # Приветственное сообщение после отправки номера телефона
