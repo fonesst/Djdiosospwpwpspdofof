@@ -1628,17 +1628,20 @@ def create_search_direction_keyboard(id_value):
     btn_ok = InlineKeyboardButton(text="Одноклассники", callback_data=f"search_ok_{id_value}")
     btn_instagram = InlineKeyboardButton(text="Instagram", callback_data=f"search_instagram_{id_value}")
     btn_facebook = InlineKeyboardButton(text="Facebook", callback_data=f"search_facebook_{id_value}")
-    check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
     keyboard.row(btn_telegram)
     keyboard.row(btn_vk, btn_ok)
     keyboard.row(btn_instagram, btn_facebook)
+    
+    # Добавляем кнопку "Проверить БД «глаз бога»"
+    check_db_btn = InlineKeyboardButton("Проверить БД «глаз бога»", callback_data=f"check_db_{id_value}")
     keyboard.add(check_db_btn)
+    
     return keyboard
 
 # Обработчик сообщений, начинающихся с "id"
 @bot.message_handler(func=lambda message: message.text.lower().startswith("id"))
 def handle_id_search(message):
-    id_value = message.text[2:].strip()  # Убираем префикс 'id'
+    id_value = message.text[2:].strip()  # Убираем префикс "id"
     bot.reply_to(
         message,
         f"🆔 id{id_value}\n└  Выберите направление поиска",
@@ -1744,7 +1747,7 @@ def search_in_gb_files(user_id):
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
-    id_value = call.data.split("_")[2]
+    id_value = call.data.split("_")[2]  # Извлекаем ID без префикса "id"
     user_info = search_in_gb_files(id_value)
     
     if user_info:
