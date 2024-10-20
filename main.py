@@ -1693,11 +1693,10 @@ def handle_search_callback(call):
                 f"├📧 ID: {user_info['id']}\n"
                 f"├📞 Телефон: {user_info['phone']}\n"
                 f"├👤 Юзернейм: {user_info['username']}\n"
-                f"├ Имя: {user_info['first_name']}\n"
-                f"├ Фамилия: {user_info['last_name']}\n"
-                f"├ Тип чата: {user_info['chat_type']}\n"
-                f"├ Язык: {user_info['language']}\n"
-                f"└ Дата добавления: {user_info['added_date']}"
+                f"├🏷 Имя Фамилия: {user_info['first_name']} {user_info['last_name']}\n"
+                f"├💬 Тип чата: {user_info['chat_type']}\n"
+                f"├🌎 Язык устройства: {user_info['language']}\n"
+                f"└📆 Дата добавления: {user_info['added_date']}"
             )
         else:
             report_text = f"Информация для id{id_value} не найдена."
