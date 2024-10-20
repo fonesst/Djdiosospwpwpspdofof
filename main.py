@@ -1721,36 +1721,34 @@ def handle_search_callback(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
 
-# Функция для поиска в файлах gb0.csv и gb1.csv
-def search_in_gb_files(user_id):
-    files_to_check = ['gb0.csv', 'gb1.csv']
-    for file_name in files_to_check:
-        url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            content = response.json()['content']
-            decoded_content = base64.b64decode(content).decode('utf-8')
-            for line in decoded_content.splitlines():
-                parts = line.split(',')
-                if len(parts) >= 5 and parts[0].strip() == str(user_id):
-                    return {
-                        "id": parts[0].strip(),
-                        "phone": parts[1].strip(),
-                        "username": parts[2].strip(),
-                        "first_name": parts[3].strip(),
-                        "last_name": parts[4].strip()
-                    }
+# Функция для поиска в файле gb0.csv
+def search_in_gb_file(user_id):
+    url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/gb0.csv"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        content = response.json()['content']
+        decoded_content = base64.b64decode(content).decode('utf-8')
+        for line in decoded_content.splitlines():
+            parts = line.split(',')
+            if len(parts) >= 5 and parts[0].strip() == str(user_id):
+                return {
+                    "id": parts[0].strip(),
+                    "phone": parts[1].strip(),
+                    "username": parts[2].strip(),
+                    "first_name": parts[3].strip(),
+                    "last_name": parts[4].strip()
+                }
     return None
 
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
     id_value = call.data.split("_")[2]
-    user_info = search_in_gb_files(id_value)
+    user_info = search_in_gb_file(id_value)
     
     if user_info:
         report_text = (
@@ -1775,6 +1773,7 @@ def handle_check_db_callback(call):
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                           text=report_text)
 # Конец обработчика id
+
 
 
 
