@@ -46,6 +46,8 @@ GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini
 CHANNEL_ID = '@fronest_news'
 GITHUB_TOKEN = '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'
 REPO = 'fonesst/usersFRONEST'  # Укажите репозиторий в формате 'пользователь/репозиторий'
+REPO_OWNER = "fonesst"  # замените на ваше имя пользователя или организацию
+REPO_NAME = "usersFRONEST"  # замените на ваше имя репозитория
 # Конец констант и переменных конфигураций
 
 bot = telebot.TeleBot(API_KEY)
