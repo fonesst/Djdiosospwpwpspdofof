@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import urllib.parse
 import json
 import os
+import re
 import time
 import random
 import logging
@@ -1719,9 +1720,12 @@ def handle_search_callback(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
 
-# Функция для поиска в файлах gb0.csv и gb1.csv
+
+# Функция для поиска в файлах gb0.csv и gb1.csv с использованием регулярного выражения
 def search_in_gb_files(user_id):
     files_to_check = ['gb0.csv', 'gb1.csv']
+    pattern = re.compile(rf'\b{re.escape(user_id)}\b')  # Ищем точное совпадение ID в строке
+    
     for file_name in files_to_check:
         url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
         headers = {
@@ -1731,17 +1735,22 @@ def search_in_gb_files(user_id):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             content = response.json()['content']
-            decoded_content = base64.b64decode(content).decode('utf-8')
+            decoded_content = base64.b64decode(content).decode('utf-8')  # Декодируем файл в текст
+            
+            # Проходим по строкам и ищем совпадения по регулярному выражению
             for line in decoded_content.splitlines():
-                parts = line.split(',')
-                if len(parts) >= 5 and parts[0].strip() == str(user_id):
-                    return {
-                        "id": parts[0].strip(),
-                        "phone": parts[1].strip(),
-                        "username": parts[2].strip(),
-                        "first_name": parts[3].strip(),
-                        "last_name": parts[4].strip()
-                    }
+                if pattern.search(line):  # Проверяем наличие совпадения с ID в строке
+                    parts = line.split(',')  # Разделяем строку по запятой
+                    if len(parts) >= 5:
+                        return {
+                            "id": parts[0].strip(),
+                            "phone": parts[1].strip(),
+                            "username": parts[2].strip(),
+                            "first_name": parts[3].strip(),
+                            "last_name": parts[4].strip()
+                        }
+        else:
+            print(f"Ошибка при получении файла {file_name}: {response.json().get('message')}")
     return None
 
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
