@@ -1777,11 +1777,18 @@ def handle_search_callback(call):
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
+    # Извлекаем id из данных коллбэка
     id_value = call.data.split("_")[2]
+    
+    # Убираем префикс "id" из id_value, если он есть
+    if id_value.startswith("id"):
+        id_value = id_value[2:].strip()
+    
+    # Выполняем поиск в базах данных
     search_results = search_in_databases(id_value)
     
     if search_results:
-        report_text = f"🔎 Найдены данные по id{id_value}:\n"
+        report_text = f"🔎 Найдены данные по {id_value}:\n"
         for result in search_results:
             report_text += (
                 f"\n📋 Отчёт из {result['type']}:\n"
@@ -1791,9 +1798,21 @@ def handle_check_db_callback(call):
                 f"└🏷 Ник: {result['Ник']}\n"
             )
     else:
-        report_text = f"Информация для id{id_value} не найдена в базах данных."
+        report_text = f"Информация для {id_value} не найдена в базах данных."
     
+    # Отправляем сообщение с результатом
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=report_text)
+
+# Функция для поиска в нескольких базах данных (осталась без изменений)
+def search_in_databases(query):
+    results = []
+    for db in databases:
+        content = get_csv_file(db.file_path)
+        if content:
+            db_results = db.search(content, query)
+            if db_results:
+                results.extend(db_results)
+    return results
 
 # Конец обработчика id
 
