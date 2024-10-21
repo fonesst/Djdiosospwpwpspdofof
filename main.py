@@ -1624,6 +1624,7 @@ def handle_q(message):
 
 
 # Начало обработчика id
+
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
     keyboard = InlineKeyboardMarkup()
@@ -1737,9 +1738,12 @@ def search_in_gb_files(user_id):
         if response.status_code == 200:
             content = response.json()['content']
             decoded_content = base64.b64decode(content).decode('utf-8')
+            print(f"Содержимое {file_name}:", decoded_content)  # временный вывод
             for line in decoded_content.splitlines():
                 parts = line.split(',')
+                print(f"Проверяем строку: {parts}, user_id: {user_id}")  # временный вывод
                 if len(parts) >= 5 and parts[0].strip() == str(user_id):
+                    print("Найдено совпадение!")  # временный вывод
                     return {
                         "id": parts[0].strip(),
                         "phone": parts[1].strip(),
