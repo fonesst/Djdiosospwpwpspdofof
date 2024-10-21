@@ -12,6 +12,7 @@ import random
 import logging
 import zipfile
 import io
+import csv
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
 from search import perform_ahmia_search, perform_aol_search, perform_google_search, perform_bing_search
@@ -30,6 +31,7 @@ from kadastr import parse_opendatabot_page, close_driver
 from selenium.webdriver.common.by import By
 import base64
 import json
+from io import StringIO
 # Конец библиотек
 
 
