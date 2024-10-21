@@ -1036,6 +1036,10 @@ def handle_phone_lookup_text(message):
 # Конец обработчика "pn"
 
 
+
+
+
+
 # Команда /createsite
 @bot.message_handler(commands=['createsite'])
 def handle_createsite(message):
@@ -1068,6 +1072,8 @@ def process_site_files(message, repo):
         bot.reply_to(message, "Пожалуйста, отпра вьте ZIP-файл.")
         bot.register_next_step_handler(message, process_site_files, repo)
 # Конец команды /createsite
+
+
 
 
 
@@ -1153,6 +1159,9 @@ def handle_pagination(call):
 # Конец команды /search
 
 
+
+
+
 # Команда /mask
 @bot.message_handler(commands=['mask'])
 def handle_mask(message):
@@ -1164,6 +1173,9 @@ def process_link_masking(message):
     masked_links = masklink(link)
     bot.reply_to(message, masked_links)
 # Конец команды /mask
+
+
+
 
 
 # Команда /сheckip
@@ -1186,6 +1198,8 @@ def process_ip_check(message):
     else:
         bot.reply_to(message, "Произошла ошибка при получении данных. Попробуйте снова.")
 # Конец команды /checkip
+
+
 
 
 
@@ -1213,6 +1227,9 @@ def process_parse_site(message):
 # Конец команды /parse
 
 
+
+
+
 # Команда /gemini
 @bot.message_handler(commands=['gemini'])
 def handle_gemini(message):
@@ -1225,6 +1242,9 @@ def process_gemini_query(message):
     response = perform_gemini_with_aol_search(query)
     bot.reply_to(message, response)
 # Конец команды /gemini
+
+
+
 
 
 
@@ -1412,6 +1432,10 @@ def shutdown():
 # Конец команды /geoint 
 
 
+
+
+
+
 # Функционал команды /apks
 @bot.message_handler(commands=['apks'])
 def handle_apks(message):
@@ -1565,6 +1589,11 @@ JADX GUI — графический интерфейс для декомпиля
 
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=topic_info['text'], reply_markup=keyboard)
 # Конец команды /apks
+
+
+
+
+
 
 # Команда /q
 @bot.message_handler(commands=['q'])
