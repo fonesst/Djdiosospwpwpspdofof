@@ -1625,6 +1625,55 @@ def handle_q(message):
 
 
 # Начало обработчика id
+
+class Database:
+    def __init__(self, name, file_path, delimiter, search_columns, result_columns):
+        self.name = name
+        self.file_path = file_path
+        self.delimiter = delimiter
+        self.search_columns = search_columns
+        self.result_columns = result_columns
+
+    def search(self, content, query):
+        results = []
+        reader = csv.reader(StringIO(content), delimiter=self.delimiter)
+        next(reader, None)  # Пропустить строку с заголовком
+        for row in reader:
+            if any(col < len(row) and query.lower() in str(row[col]).lower() for col in self.search_columns):
+                result = {"type": self.name}
+                for col, name in self.result_columns.items():
+                    result[name] = row[col] if col < len(row) else 'Н/Д'
+                results.append(result)
+        return results
+
+databases = [
+    Database("gb0", "gb0.csv", ",", [0, 1, 2, 3], {0: 'ID', 1: 'Номер телефона', 2: 'Юзер', 3: 'Ник'}),
+    Database("gb1", "gb1.csv", ",", [0, 1, 2, 3], {0: 'ID', 1: 'Номер телефона', 2: 'Юзер', 3: 'Ник'})
+]
+
+def get_csv_file(file_path):
+    url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{file_path}'
+    headers = {'Authorization': f'token {GITHUB_TOKEN}'}
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        content = response.json()
+        file_content = requests.get(content['download_url']).text
+        return file_content
+    else:
+        return None
+
+# Функция для поиска в нескольких базах данных
+def search_in_databases(query):
+    results = []
+    for db in databases:
+        content = get_csv_file(db.file_path)
+        if content:
+            db_results = db.search(content, query)
+            if db_results:
+                results.extend(db_results)
+    return results
+
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
     keyboard = InlineKeyboardMarkup()
@@ -1669,14 +1718,17 @@ def find_user_info(user_id):
     users_data = get_users_file()
     if users_data:
         for line in users_data:
-            parts = line.split(',')
-            if len(parts) >= 5 and parts[0].strip() == str(user_id):
+            parts = line.split('|')
+            if len(parts) >= 8 and parts[1].strip() == str(user_id):
                 return {
-                    "id": parts[0].strip(),
-                    "phone": parts[1].strip(),
+                    "phone": parts[0].strip(),
+                    "id": parts[1].strip(),
                     "username": parts[2].strip(),
                     "first_name": parts[3].strip(),
-                    "last_name": parts[4].strip()
+                    "last_name": parts[4].strip(),
+                    "chat_type": parts[5].strip(),
+                    "language": parts[6].strip(),
+                    "added_date": parts[7].strip()
                 }
     return None
 
@@ -1696,8 +1748,10 @@ def handle_search_callback(call):
                 f"├📧 ID: {user_info['id']}\n"
                 f"├📞 Телефон: {user_info['phone']}\n"
                 f"├👤 Юзернейм: {user_info['username']}\n"
-                f"├🏷 Имя: {user_info['first_name']}\n"
-                f"└🏷 Фамилия: {user_info['last_name']}"
+                f"├🏷 Имя Фамилия: {user_info['first_name']} {user_info['last_name']}\n"
+                f"├💬 Тип чата: {user_info['chat_type']}\n"
+                f"├🌎 Язык устройства: {user_info['language']}\n"
+                f"└📆 Дата добавления: {user_info['added_date']}"
             )
             
             # Создаем инлайн кнопку "Проверить БД «глаз бога»"
@@ -1720,67 +1774,27 @@ def handle_search_callback(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
                               text=f"Функция для поиска по {direction} пока не реализована.")
 
-
-# Функция для поиска в файлах gb0.csv и gb1.csv с использованием регулярного выражения
-def search_in_gb_files(user_id):
-    files_to_check = ['gb0.csv', 'gb1.csv']
-    pattern = re.compile(rf'\b{re.escape(user_id)}\b')  # Ищем точное совпадение ID в строке
-    
-    for file_name in files_to_check:
-        url = f"https://api.github.com/repos/fonesst/usersFRONEST/contents/{file_name}"
-        headers = {
-            "Authorization": f"token {GITHUB_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            content = response.json()['content']
-            decoded_content = base64.b64decode(content).decode('utf-8')  # Декодируем файл в текст
-            
-            # Проходим по строкам и ищем совпадения по регулярному выражению
-            for line in decoded_content.splitlines():
-                if pattern.search(line):  # Проверяем наличие совпадения с ID в строке
-                    parts = line.split(',')  # Разделяем строку по запятой
-                    if len(parts) >= 5:
-                        return {
-                            "id": parts[0].strip(),
-                            "phone": parts[1].strip(),
-                            "username": parts[2].strip(),
-                            "first_name": parts[3].strip(),
-                            "last_name": parts[4].strip()
-                        }
-        else:
-            print(f"Ошибка при получении файла {file_name}: {response.json().get('message')}")
-    return None
-
 # Обработчик нажатия на кнопку "Проверить БД «глаз бога»"
 @bot.callback_query_handler(func=lambda call: call.data.startswith("check_db_"))
 def handle_check_db_callback(call):
     id_value = call.data.split("_")[2]
-    user_info = search_in_gb_files(id_value)
+    search_results = search_in_databases(id_value)
     
-    if user_info:
-        report_text = (
-            "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
-            "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
-            "База данных стала «утекшей» в июле 2021 года.\n\n"
-            "📋 Отчёт содержит:\n"
-            f"├📧 ID: {user_info['id']}\n"
-            f"├📞 Телефон: {user_info['phone']}\n"
-            f"├👤 Юзернейм: {user_info['username']}\n"
-            f"├🏷 Имя: {user_info['first_name']}\n"
-            f"└🏷 Фамилия: {user_info['last_name']}"
-        )
+    if search_results:
+        report_text = f"🔎 Найдены данные по id{id_value}:\n"
+        for result in search_results:
+            report_text += (
+                f"\n📋 Отчёт из {result['type']}:\n"
+                f"├📧 ID: {result['ID']}\n"
+                f"├📞 Телефон: {result['Номер телефона']}\n"
+                f"├👤 Юзер: {result['Юзер']}\n"
+                f"└🏷 Ник: {result['Ник']}\n"
+            )
     else:
-        report_text = (
-            "💦 В слитой базе данных Telegram-бота «Глаз Бога» содержится информация о 774 тысячах пользователей. "
-            "Включены данные, такие как ID пользователей, номера телефонов, имена и фамилии. "
-            "База данных стала «утекшей» в июле 2021 года.\n\n"
-            f"Информация для id{id_value} не найдена в базе данных «Глаз Бога»."
-        )
+        report_text = f"Информация для id{id_value} не найдена в базах данных."
     
-    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, 
-                          text=report_text)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=report_text)
+
 # Конец обработчика id
 
 
