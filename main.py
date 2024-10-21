@@ -1624,7 +1624,6 @@ def handle_q(message):
 
 
 # Начало обработчика id
-
 # Функция для создания инлайн-кнопок выбора направления
 def create_search_direction_keyboard(id_value):
     keyboard = InlineKeyboardMarkup()
@@ -1669,17 +1668,14 @@ def find_user_info(user_id):
     users_data = get_users_file()
     if users_data:
         for line in users_data:
-            parts = line.split('|')
-            if len(parts) >= 8 and parts[1].strip() == str(user_id):
+            parts = line.split(',')
+            if len(parts) >= 5 and parts[0].strip() == str(user_id):
                 return {
-                    "phone": parts[0].strip(),
-                    "id": parts[1].strip(),
+                    "id": parts[0].strip(),
+                    "phone": parts[1].strip(),
                     "username": parts[2].strip(),
                     "first_name": parts[3].strip(),
-                    "last_name": parts[4].strip(),
-                    "chat_type": parts[5].strip(),
-                    "language": parts[6].strip(),
-                    "added_date": parts[7].strip()
+                    "last_name": parts[4].strip()
                 }
     return None
 
@@ -1699,10 +1695,8 @@ def handle_search_callback(call):
                 f"├📧 ID: {user_info['id']}\n"
                 f"├📞 Телефон: {user_info['phone']}\n"
                 f"├👤 Юзернейм: {user_info['username']}\n"
-                f"├🏷 Имя Фамилия: {user_info['first_name']} {user_info['last_name']}\n"
-                f"├💬 Тип чата: {user_info['chat_type']}\n"
-                f"├🌎 Язык устройства: {user_info['language']}\n"
-                f"└📆 Дата добавления: {user_info['added_date']}"
+                f"├🏷 Имя: {user_info['first_name']}\n"
+                f"└🏷 Фамилия: {user_info['last_name']}"
             )
             
             # Создаем инлайн кнопку "Проверить БД «глаз бога»"
@@ -1738,12 +1732,9 @@ def search_in_gb_files(user_id):
         if response.status_code == 200:
             content = response.json()['content']
             decoded_content = base64.b64decode(content).decode('utf-8')
-            print(f"Содержимое {file_name}:", decoded_content)  # временный вывод
             for line in decoded_content.splitlines():
                 parts = line.split(',')
-                print(f"Проверяем строку: {parts}, user_id: {user_id}")  # временный вывод
                 if len(parts) >= 5 and parts[0].strip() == str(user_id):
-                    print("Найдено совпадение!")  # временный вывод
                     return {
                         "id": parts[0].strip(),
                         "phone": parts[1].strip(),
